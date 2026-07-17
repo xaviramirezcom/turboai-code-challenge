@@ -1,8 +1,9 @@
 """Repository ports (abstract) for the notes context."""
 
 from abc import ABC, abstractmethod
+from uuid import UUID
 
-from .entities import Category
+from .entities import Category, Note
 
 
 class CategoryRepository(ABC):
@@ -11,3 +12,36 @@ class CategoryRepository(ABC):
 
     @abstractmethod
     def list_for_owner(self, owner_id: int) -> list[Category]: ...
+
+    @abstractmethod
+    def get_default_for_owner(self, owner_id: int) -> Category:
+        """The owner's default category for a new note. Raises CategoryNotFound."""
+
+    @abstractmethod
+    def get_for_owner(self, category_id: int, owner_id: int) -> Category | None:
+        """The owner's category by id, or None if it isn't theirs (3.2 validation)."""
+
+
+class NoteRepository(ABC):
+    @abstractmethod
+    def add(self, note: Note) -> Note: ...
+
+    @abstractmethod
+    def get(self, note_id: UUID, owner_id: int) -> Note:
+        """Owner-scoped read. Raises NoteNotFound."""
+
+    @abstractmethod
+    def get_for_update(self, note_id: UUID, owner_id: int) -> Note:
+        """Owner-scoped, row-locked read for a mutation. Raises NoteNotFound."""
+
+    @abstractmethod
+    def save(self, note: Note) -> Note: ...
+
+    @abstractmethod
+    def list_for_owner(
+        self, owner_id: int, category_id: int | None = None
+    ) -> list[Note]: ...
+
+    @abstractmethod
+    def delete(self, note_id: UUID, owner_id: int) -> None:
+        """Owner-scoped delete. Raises NoteNotFound."""

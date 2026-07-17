@@ -6,6 +6,6 @@ This module is outside the enforced inward layers, so importing infrastructure
 here is allowed.
 """
 
-from notes.infrastructure.models import CategoryORM
+from notes.infrastructure.models import CategoryORM, NoteORM
 
-__all__ = ["CategoryORM"]
+__all__ = ["CategoryORM", "NoteORM"]

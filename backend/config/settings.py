@@ -26,6 +26,7 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
     "observability",
@@ -33,13 +34,19 @@ INSTALLED_APPS = [
 ]
 
 # RequestLogMiddleware sits outermost so it wraps (and logs) everything.
-# Auth is DRF TokenAuthentication (per-view), so Django's session-based
-# AuthenticationMiddleware is intentionally not installed.
+# CorsMiddleware must precede CommonMiddleware to answer preflight (OPTIONS) and
+# add CORS headers. Auth is DRF TokenAuthentication (per-view), so Django's
+# session-based AuthenticationMiddleware is intentionally not installed.
 MIDDLEWARE = [
     "observability.middleware.RequestLogMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
 ]
+
+# Cross-origin: the Next.js dev server (http://localhost:3000) calls this API.
+# Token auth uses the Authorization header (not cookies), so credentials stay off.
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"

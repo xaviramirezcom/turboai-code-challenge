@@ -1,7 +1,9 @@
 """Canonical default categories seeded for every new user.
 
 Source of truth for the three categories the demo shows (auth criterion 1.5,
-board criterion 1.3). Colours from ``specs/notes/design.md``.
+board criterion 1.3). Colours are the EXACT Figma card/editor hex (the border /
+solid colour; the card & editor background render it at 50% alpha) — confirmed
+against frames 2:39 (Random Thoughts), 2:130 (School), 2:118 (Personal).
 """
 
 from dataclasses import dataclass
@@ -14,7 +16,7 @@ class DefaultCategory:
 
 
 DEFAULT_CATEGORIES: tuple[DefaultCategory, ...] = (
-    DefaultCategory(name="Random Thoughts", color="#E7A67E"),
-    DefaultCategory(name="School", color="#F3DCA0"),
-    DefaultCategory(name="Personal", color="#8FB8AC"),
+    DefaultCategory(name="Random Thoughts", color="#EF9C66"),
+    DefaultCategory(name="School", color="#FCDC94"),
+    DefaultCategory(name="Personal", color="#78ABA8"),
 )

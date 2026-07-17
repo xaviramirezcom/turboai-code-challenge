@@ -4,6 +4,8 @@ Business rules live in the domain; these are dumb rows. Repositories map these
 to/from domain entities and never leak ORM objects past their boundary.
 """
 
+import uuid
+
 from django.conf import settings
 from django.db import models
 
@@ -26,3 +28,37 @@ class CategoryORM(models.Model):
             )
         ]
         ordering = ["id"]
+
+
+class NoteORM(models.Model):
+    # UUID pk so an offline-created note keeps the same id after sync
+    # (see specs/collaboration).
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200, blank=True, default="")
+    content = models.TextField(blank=True, default="")
+    category = models.ForeignKey(
+        CategoryORM, on_delete=models.CASCADE, related_name="notes"
+    )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notes"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Set explicitly by the service (not auto_now) so category-only and content
+    # edits both bump it deterministically.
+    last_edited_at = models.DateTimeField()
+
+    # Concurrency fields — persistence only here; behaviour is defined in
+    # specs/collaboration (optimistic version + advisory lock).
+    version = models.PositiveIntegerField(default=1)
+    locked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="locked_notes",
+    )
+    lock_expires_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "notes"
+        ordering = ["-last_edited_at"]

@@ -43,10 +43,25 @@
 - Resolved the spec's four open questions (token auth, ≥8-char policy, logout in
   scope, shared password toggle) and recorded them in `specs/auth/`.
 
+## Notes feature (create / autosave / editor)
+
+- Built the notes hexagonal slice (Note entity → NoteService → Django repo with
+  `select_for_update` → DRF views) and the FSD frontend (`entities/note`,
+  `features/create-note` + `features/edit-note` with a debounced, in-flight-guarded
+  autosave hook), tests-first per criterion.
+- Pulled the exact editor (2:8568) and card (2:39) Figma frames; **reconciled a
+  spec↔Figma data conflict** — the category colours were placeholders, so I read
+  the exact hex (`#EF9C66/#FCDC94/#78ABA8`) and updated the seed + card/editor
+  (colour @ 50% alpha + solid border).
+- Ran the `code-reviewer` subagent and fixed its findings by hand: an autosave
+  concurrent-flush **race** (added an in-flight guard + a test that injects a
+  keystroke mid-save), silent save-failure handling, and a missing `5.1/5.2`
+  access-control criterion the tests referenced.
+
 ## What I did NOT delegate
 
 - The architecture (hexagonal boundaries, the port/adapter split), the data
   model, and the open-question decisions.
-- The honest call to **flag that the Figma frames are unlinked** (no file URL in
-  the specs) rather than invent pixel-exact visuals — recorded in
-  `specs/auth/requirements.md` → Figma status.
+- The honest call to **flag spec↔Figma conflicts** (auth Figma-unlinked status;
+  the notes category-colour reconciliation) rather than silently guess — recorded
+  in each spec's requirements.
