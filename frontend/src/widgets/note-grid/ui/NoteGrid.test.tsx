@@ -2,15 +2,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { listNotes, type Note } from '@/entities/note';
+import { deleteNote, listNotes, type Note } from '@/entities/note';
 
 import { NoteGrid } from './NoteGrid';
 
 vi.mock('@/entities/note', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/entities/note')>()),
   listNotes: vi.fn(),
+  deleteNote: vi.fn(),
 }));
 const mockedList = vi.mocked(listNotes);
+const mockedDelete = vi.mocked(deleteNote);
 
 function note(id: string, title: string): Note {
   return {
@@ -27,7 +29,10 @@ function note(id: string, title: string): Note {
   };
 }
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.restoreAllMocks();
+});
 
 describe('NoteGrid', () => {
   it('renders cards in the order returned by the API', async () => {
@@ -35,7 +40,8 @@ describe('NoteGrid', () => {
     mockedList.mockResolvedValue([note('2', 'Second'), note('1', 'First')]);
     render(<NoteGrid categoryId={null} onOpen={() => {}} />);
 
-    const cards = await screen.findAllByRole('button');
+    // filter by preview text so the per-card delete ✕ buttons aren't matched
+    const cards = await screen.findAllByRole('button', { name: /body/ });
     expect(cards[0]).toHaveTextContent('Second');
     expect(cards[1]).toHaveTextContent('First');
   });
@@ -75,5 +81,59 @@ describe('NoteGrid', () => {
     expect(
       await screen.findByText('Couldn’t load your notes.'),
     ).toBeInTheDocument();
+  });
+
+  it('confirms, deletes, removes the card and notifies the view (6.2, 6.3)', async () => {
+    mockedList.mockResolvedValue([note('a', 'Alpha'), note('b', 'Beta')]);
+    mockedDelete.mockResolvedValue(null);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const onDeleted = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <NoteGrid categoryId={null} onOpen={() => {}} onDeleted={onDeleted} />,
+    );
+    await screen.findByText('Alpha');
+
+    const [alphaDelete] = screen.getAllByRole('button', {
+      name: /delete note/i,
+    });
+    if (!alphaDelete) throw new Error('expected a delete control');
+    await user.click(alphaDelete);
+
+    await waitFor(() => expect(mockedDelete).toHaveBeenCalledWith('a'));
+    await waitFor(() =>
+      expect(screen.queryByText('Alpha')).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText('Beta')).toBeInTheDocument(); // sibling untouched
+    expect(onDeleted).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'a' }),
+    );
+  });
+
+  it('does not delete when the confirmation is cancelled (6.4)', async () => {
+    mockedList.mockResolvedValue([note('a', 'Alpha')]);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const user = userEvent.setup();
+    render(<NoteGrid categoryId={null} onOpen={() => {}} />);
+    await screen.findByText('Alpha');
+
+    await user.click(screen.getByRole('button', { name: /delete note/i }));
+
+    expect(mockedDelete).not.toHaveBeenCalled();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+  });
+
+  it('keeps the card when the delete request fails (6.5)', async () => {
+    mockedList.mockResolvedValue([note('a', 'Alpha')]);
+    mockedDelete.mockRejectedValue(new Error('500'));
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const user = userEvent.setup();
+    render(<NoteGrid categoryId={null} onOpen={() => {}} />);
+    await screen.findByText('Alpha');
+
+    await user.click(screen.getByRole('button', { name: /delete note/i }));
+
+    await waitFor(() => expect(mockedDelete).toHaveBeenCalled());
+    expect(screen.getByText('Alpha')).toBeInTheDocument(); // no silent loss
   });
 });

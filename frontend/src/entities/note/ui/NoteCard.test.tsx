@@ -39,7 +39,30 @@ describe('NoteCard', () => {
     const user = userEvent.setup();
     render(<NoteCard note={NOTE} onOpen={onOpen} />);
 
-    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('button', { name: /Grocery List/ }));
     expect(onOpen).toHaveBeenCalledOnce();
+  });
+
+  it('shows a delete control only when onDelete is provided (board 6.1)', () => {
+    const { rerender } = render(<NoteCard note={NOTE} />);
+    expect(
+      screen.queryByRole('button', { name: /delete note/i }),
+    ).not.toBeInTheDocument();
+
+    rerender(<NoteCard note={NOTE} onDelete={() => {}} />);
+    expect(
+      screen.getByRole('button', { name: /delete note/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('the delete control fires onDelete and does NOT open the note (board 6.3)', async () => {
+    const onOpen = vi.fn();
+    const onDelete = vi.fn();
+    const user = userEvent.setup();
+    render(<NoteCard note={NOTE} onOpen={onOpen} onDelete={onDelete} />);
+
+    await user.click(screen.getByRole('button', { name: /delete note/i }));
+    expect(onDelete).toHaveBeenCalledOnce();
+    expect(onOpen).not.toHaveBeenCalled(); // stopPropagation — no navigation
   });
 });

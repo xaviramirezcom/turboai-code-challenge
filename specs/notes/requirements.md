@@ -16,19 +16,23 @@ Source: the walkthrough transcript + video frames in `specs/raw_sources/`.
 
 ## Requirements
 
-### Requirement 1 — Create a note instantly
+### Requirement 1 — Deferred note creation (draft until first keystroke)
 
-**User story:** As a user, I want a new note to be created the moment I ask for
-one, so that I can start writing without a save step.
+**User story:** As a user, I want a new note to open instantly as an empty draft
+and only be saved once I actually start writing, so the board is never littered
+with blank notes I opened by accident.
 
 **Acceptance criteria**
 
-1.1. WHEN the user clicks **+ New Note**, THE SYSTEM SHALL create and persist a
-new note immediately and open it in the editor (HTTP 201), with no explicit
-save action required.
-1.2. WHEN a note is created, THE SYSTEM SHALL assign it a default category and
-set `created_at` and `last_edited_at` to the creation time.
-1.3. THE SYSTEM SHALL show placeholder text for an empty title and empty content
+1.1. WHEN the user clicks **+ New Note**, THE SYSTEM SHALL open an empty draft
+editor immediately WITHOUT persisting a note (no `POST` is issued yet).
+1.2. WHEN the user types the first character into the draft's title or content,
+THE SYSTEM SHALL create and persist the note (`POST` → HTTP 201) with a default
+category and `created_at`/`last_edited_at` set to the creation time, then
+autosave subsequent edits (Requirement 2) — with no explicit save action.
+1.3. IF the user closes or leaves a draft whose title and content are both empty,
+THEN THE SYSTEM SHALL persist nothing (no empty note is created).
+1.4. THE SYSTEM SHALL show placeholder text for an empty title and empty content
 (frames: title "Note Title", body "Pour your heart out…") _(confirm in Figma)_.
 
 ### Requirement 2 — Edit title and content with autosave
@@ -91,10 +95,11 @@ on top of this core. This spec's create/edit is the online, single-editor path.
 
 ## Open questions
 
-- [x] **Delete a note** is not shown in the walkthrough. **Decided: include it**
-      (`DELETE /api/notes/{id}/` → 204, owner-scoped) for CRUD completeness and
-      test coverage. UI entry point is deferred to the board spec; the endpoint +
-      `NoteService.delete` ship here.
+- [x] **Delete a note** is not shown in the walkthrough. **Decided: include it.**
+      `DELETE /api/notes/{id}/` → **204** for the owner, **404** if the note is
+      missing or owned by another user (owner-scoped; never reveals existence).
+      The endpoint + `NoteService.delete` ship here; the UI entry point (a hover
+      ✕ on board cards) is specified in `specs/board/` Requirement 6.
 - [x] Autosave trigger. **Decided: debounced keystroke (~500 ms)**, no save
       button; edits coalesce and the latest state wins (2.3). Also flush on
       close/unmount so 4.1 persists the latest state.

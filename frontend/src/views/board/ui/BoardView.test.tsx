@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { listCategories } from '@/entities/category';
-import { listNotes, type Note } from '@/entities/note';
+import { deleteNote, listNotes, type Note } from '@/entities/note';
 
 import { BoardView } from './BoardView';
 
@@ -13,10 +13,12 @@ vi.mock('@/entities/note', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/entities/note')>()),
   listNotes: vi.fn(),
   createNote: vi.fn(),
+  deleteNote: vi.fn(),
 }));
 
 const mockedCats = vi.mocked(listCategories);
 const mockedNotes = vi.mocked(listNotes);
+const mockedDelete = vi.mocked(deleteNote);
 
 const CATS = [
   {
@@ -42,7 +44,10 @@ const NOTE: Note = {
   lock_expires_at: null,
 };
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.restoreAllMocks();
+});
 
 describe('BoardView', () => {
   it('renders New Note, the sidebar and the note grid', async () => {
@@ -70,6 +75,27 @@ describe('BoardView', () => {
     await waitFor(() => expect(mockedNotes).toHaveBeenCalledWith(undefined));
     await user.click(await screen.findByRole('button', { name: /School 0/ }));
     await waitFor(() => expect(mockedNotes).toHaveBeenCalledWith(2));
+  });
+
+  it('re-fetches the sidebar counts after deleting a note (6.3)', async () => {
+    mockedCats.mockResolvedValue(CATS);
+    mockedNotes.mockResolvedValue([NOTE]);
+    mockedDelete.mockResolvedValue(null);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const user = userEvent.setup();
+    render(<BoardView />);
+
+    await screen.findByText('Grocery List');
+    await waitFor(() => expect(mockedCats).toHaveBeenCalledTimes(1));
+
+    await user.click(screen.getByRole('button', { name: /delete note/i }));
+
+    await waitFor(() => expect(mockedDelete).toHaveBeenCalledWith('n1'));
+    // counts re-fetch (decrement) and the card is gone
+    await waitFor(() => expect(mockedCats).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(screen.queryByText('Grocery List')).not.toBeInTheDocument(),
+    );
   });
 
   it('shows the empty state alongside the sidebar and New Note', async () => {

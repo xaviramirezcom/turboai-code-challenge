@@ -10,7 +10,9 @@ export interface CategoriesState {
   error: boolean;
 }
 
-export function useCategories(): CategoriesState {
+/** `refreshKey` re-fetches when it changes, so the view can refresh the note
+ * counts after a delete (board 6.3). */
+export function useCategories(refreshKey = 0): CategoriesState {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -33,7 +35,7 @@ export function useCategories(): CategoriesState {
     return () => {
       active = false;
     };
-  }, []);
+  }, [refreshKey]);
 
   return { categories, loading, error };
 }

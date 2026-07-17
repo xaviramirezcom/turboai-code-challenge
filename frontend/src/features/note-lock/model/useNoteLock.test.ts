@@ -111,6 +111,24 @@ describe('useNoteLock', () => {
     expect(result.current.readOnly).toBe(false);
   });
 
+  it('does not touch the lock while disabled, then acquires when enabled (draft)', async () => {
+    // covers 5.1 for deferred creation — no lock attempt until the note exists
+    mockedLock.mockResolvedValue({ locked_by: 'me', lock_expires_at: null });
+    mockedUnlock.mockResolvedValue(null);
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useNoteLock('n1', enabled),
+      { initialProps: { enabled: false } },
+    );
+    // disabled: no lock/heartbeat/unlock calls, and the note stays editable
+    expect(mockedLock).not.toHaveBeenCalled();
+    expect(result.current.readOnly).toBe(false);
+
+    rerender({ enabled: true }); // draft persisted → acquire now
+    await waitFor(() => expect(result.current.status).toBe('editing'));
+    expect(mockedLock).toHaveBeenCalledWith('n1', expect.any(String));
+  });
+
   it('releases the lock on unmount', async () => {
     // covers 5.4
     mockedLock.mockResolvedValue({ locked_by: 'me', lock_expires_at: null });

@@ -24,11 +24,16 @@ export interface NoteLock {
 /** Acquire the advisory lock on open, heartbeat while editing, release on close
  * (5.1, 5.3, 5.4). If another session holds it, the note becomes read-only (5.2)
  * and this tab keeps polling so it recovers once the lock frees. A network
- * failure is treated optimistically (offline editing is optimistic). */
-export function useNoteLock(noteId: string): NoteLock {
+ * failure is treated optimistically (offline editing is optimistic).
+ *
+ * `enabled` gates acquisition: pass false while the note doesn't exist yet (an
+ * unsaved draft, notes 1.1) — the lock is (re-)acquired once it flips true, so a
+ * freshly-created note gets locked without a reload. */
+export function useNoteLock(noteId: string, enabled = true): NoteLock {
   const [status, setStatus] = useState<LockStatus>('acquiring');
 
   useEffect(() => {
+    if (!enabled) return; // note doesn't exist yet — nothing to lock
     const session = getSessionId();
     let active = true;
     let heartbeat: ReturnType<typeof setInterval> | null = null;
@@ -95,7 +100,7 @@ export function useNoteLock(noteId: string): NoteLock {
       window.removeEventListener('pagehide', releaseOnHide);
       void unlockNote(noteId, session).catch(() => {});
     };
-  }, [noteId]);
+  }, [noteId, enabled]);
 
   return { status, readOnly: status === 'locked' };
 }

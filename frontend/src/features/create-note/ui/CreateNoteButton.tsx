@@ -1,9 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 
-import { createNote } from '@/entities/note';
+import { newId } from '@/shared/lib';
 
 function PlusIcon() {
   return (
@@ -20,28 +19,18 @@ function PlusIcon() {
   );
 }
 
-/** "New Note" — creates a note immediately and opens it (criterion 1.1). */
+/** "New Note" — opens an empty draft editor at a fresh client id WITHOUT
+ * persisting (criterion 1.1). The draft is saved on the first keystroke by the
+ * editor (1.2); the `new=1` flag tells the editor to start as a draft. */
 export function CreateNoteButton() {
   const router = useRouter();
-  const [creating, setCreating] = useState(false);
 
-  async function handleClick() {
-    setCreating(true);
-    try {
-      const note = await createNote();
-      router.push(`/notes/${note.id}`);
-    } catch {
-      setCreating(false);
-    }
+  function handleClick() {
+    router.push(`/notes/${newId()}?new=1`);
   }
 
   return (
-    <button
-      type="button"
-      className="new-note-button"
-      onClick={handleClick}
-      disabled={creating}
-    >
+    <button type="button" className="new-note-button" onClick={handleClick}>
       <span className="new-note-button__icon">
         <PlusIcon />
       </span>

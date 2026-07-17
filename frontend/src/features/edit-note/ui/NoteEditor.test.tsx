@@ -3,13 +3,18 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { listCategories } from '@/entities/category';
-import { getNote, updateNote } from '@/entities/note';
+import { createNote, getNote, updateNote } from '@/entities/note';
 
 import { NoteEditor } from './NoteEditor';
 
 const push = vi.fn();
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
-vi.mock('@/entities/note', () => ({ getNote: vi.fn(), updateNote: vi.fn() }));
+const replace = vi.fn();
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push, replace }) }));
+vi.mock('@/entities/note', () => ({
+  getNote: vi.fn(),
+  updateNote: vi.fn(),
+  createNote: vi.fn(),
+}));
 vi.mock('@/entities/category', () => ({ listCategories: vi.fn() }));
 vi.mock('@/features/note-lock', () => ({
   useNoteLock: () => ({ readOnly: false, status: 'editing' }),
@@ -18,6 +23,7 @@ vi.mock('@/features/note-presence', () => ({ usePresence: () => 0 }));
 
 const mockedGet = vi.mocked(getNote);
 const mockedUpdate = vi.mocked(updateNote);
+const mockedCreate = vi.mocked(createNote);
 const mockedList = vi.mocked(listCategories);
 
 const NOTE = {
@@ -59,8 +65,24 @@ function setup() {
 afterEach(() => vi.clearAllMocks());
 
 describe('NoteEditor', () => {
+  it('a draft creates on first keystroke then drops ?new (notes 1.1/1.2)', async () => {
+    mockedList.mockResolvedValue(CATS);
+    mockedCreate.mockResolvedValue({ ...NOTE });
+    mockedUpdate.mockResolvedValue({ ...NOTE, title: 'H', version: 2 });
+    const user = userEvent.setup();
+    render(<NoteEditor noteId="n1" draft />);
+
+    const titleInput = await screen.findByPlaceholderText('Note Title');
+    expect(mockedGet).not.toHaveBeenCalled(); // a draft never fetches (1.1)
+
+    await user.type(titleInput, 'H');
+
+    await waitFor(() => expect(mockedCreate).toHaveBeenCalled()); // persisted (1.2)
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/notes/n1')); // drops ?new
+  });
+
   it('shows the placeholders and last-edited label once loaded', async () => {
-    // covers 1.3, 2.4, 3.1
+    // covers 1.4 (placeholders), 2.4, 3.1
     setup();
     render(<NoteEditor noteId="n1" />);
 

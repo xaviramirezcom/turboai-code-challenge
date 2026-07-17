@@ -73,6 +73,30 @@ holds, so that I can navigate my notes.
      notes…") *(confirm copy/art in Figma)* while still showing the sidebar and
      **+ New Note**.
 
+### Requirement 6 — Delete a note from its card
+
+**User story:** As a user, I want to delete a note straight from the board
+without opening it, so I can clear out notes quickly.
+
+Not in the Figma — style the ✕ to match the app (like the editor's close ✕) and
+keep it minimal (see `design.md`).
+
+**Acceptance criteria**
+
+6.1. WHEN the user hovers (or keyboard-focuses) a note card, THE SYSTEM SHALL
+     reveal a delete (✕) control on that card.
+6.2. WHEN the user activates the delete control, THE SYSTEM SHALL ask for a
+     lightweight confirmation before deleting.
+6.3. WHEN the user confirms, THE SYSTEM SHALL delete the note
+     (`DELETE /api/notes/{id}/` → 204), remove its card from the grid, and
+     decrement the affected category counts (the note's category and All
+     Categories) — WITHOUT opening the note (the delete click SHALL NOT navigate
+     to the editor).
+6.4. IF the user cancels the confirmation, THEN THE SYSTEM SHALL not delete the
+     note and SHALL NOT navigate to the editor.
+6.5. IF the delete request fails, THEN THE SYSTEM SHALL keep the note's card
+     (no silent loss) — the card is removed only after a successful 204.
+
 ## Open questions
 - [x] Does the count next to a category respect the active filter, or always show
       totals? **Decided: totals** (frames show totals) — `GET /api/categories/`

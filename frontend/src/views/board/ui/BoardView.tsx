@@ -13,6 +13,8 @@ import { NoteGrid } from '@/widgets/note-grid';
 export function BoardView() {
   const router = useRouter();
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
+  // Bumped on delete so the sidebar re-fetches and its counts decrement (6.3).
+  const [countsRefresh, setCountsRefresh] = useState(0);
 
   return (
     <main className="board">
@@ -24,10 +26,12 @@ export function BoardView() {
         <CategorySidebar
           activeId={activeCategoryId}
           onSelect={setActiveCategoryId}
+          refreshKey={countsRefresh}
         />
         <NoteGrid
           categoryId={activeCategoryId}
           onOpen={(noteId) => router.push(`/notes/${noteId}`)}
+          onDeleted={() => setCountsRefresh((n) => n + 1)}
         />
       </div>
     </main>

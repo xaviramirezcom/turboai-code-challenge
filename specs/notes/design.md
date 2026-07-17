@@ -41,11 +41,11 @@ Supabase Auth or edge functions. See `specs/OVERVIEW.md`.
 
 | Method | Path | Body | Success | Serves |
 |--------|------|------|---------|--------|
-| POST | `/api/notes/` | `{}` (optional `category_id`) | 201 Note | 1.1, 1.2 |
-| GET | `/api/notes/{id}/` | – | 200 Note | editor load |
+| POST | `/api/notes/` | `{}` (optional client `id`, optional `category_id`) | 201 Note | 1.2 |
+| GET | `/api/notes/{id}/` | – | 200 Note (404 if missing/not owned) | editor load |
 | PATCH | `/api/notes/{id}/` | `{title?, content?, category_id?}` | 200 Note | 2.1, 2.2, 3.2 |
 | GET | `/api/notes/?category={id}` | – | 200 `[Note]` | board (see board spec) |
-| DELETE | `/api/notes/{id}/` | – | 204 | delete (decided: in) |
+| DELETE | `/api/notes/{id}/` | – | 204 owner · 404 missing/not owned | board 6.3 |
 | GET | `/api/categories/` | – | 200 `[{id,name,color,is_default}]` | 3.1 (editor dropdown) + board sidebar |
 
 Note shape: `{id, title, content, category_id, category: {id,name,color}, created_at, last_edited_at}`.
@@ -69,6 +69,19 @@ Each mutation publishes a domain event via the `EventPublisher` port → `EventL
 Autosave lives in the editor's `model/` hook: debounce (~500 ms *(confirm)*),
 PATCH via the slice `api/`, coalesce in-flight edits, surface a "saving/saved"
 affordance. Editor background = category colour (token from `entities/category`).
+
+**Deferred creation (Requirement 1).** **+ New Note** does not `POST`. It
+generates a client `id` (UUID) and opens the editor at `/notes/{id}?new=1`; the
+editor starts as an empty in-memory draft (default category, placeholders) and
+**does not fetch**. The draft persists on the first keystroke: the autosave flush
+issues `POST /api/notes/` with that client `id` (201), then the normal PATCH
+autosave continues. Sending the client `id` keeps the URL stable and makes the
+create idempotent (a replayed create returns the existing note — reused from the
+offline-sync path, collaboration 3.4). Once persisted, the editor drops `?new=1`
+(history replace) so a reload loads the saved note instead of a fresh draft.
+Closing/leaving a still-empty draft issues nothing (1.3). The `new=1` flag is
+read once on mount, so the guard is `features/create-note` (opens the draft) +
+`features/edit-note` (persists on first edit); no draft rows exist server-side.
 
 ## Colours (confirmed in Figma — exact hex)
 
@@ -96,5 +109,7 @@ colour; the **card and editor background render it at 50% alpha**):
 - Domain: `edit()`/`set_category()` bump `last_edited_at`; empty title/content allowed.
 - Application: create assigns default category + timestamps; update coalesces fields; rejects a category not owned by the user.
 - Infrastructure: repository round-trip; ordering by `-last_edited_at`.
-- Interface: POST 201 empty note; PATCH updates + bumps timestamp; cross-user access returns 404.
-- Frontend: editor autosaves (mocked api), category change recolours, close returns to board.
+- Interface: POST 201 empty note; PATCH updates + bumps timestamp; cross-user access returns 404; DELETE 204 owner / 404 missing-or-not-owned.
+- Frontend: **+ New Note** opens a draft without POSTing (1.1); the draft creates
+  on the first keystroke then autosaves (1.2); closing an empty draft creates
+  nothing (1.3); category change recolours; close returns to board.

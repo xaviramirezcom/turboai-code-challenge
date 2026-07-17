@@ -5,12 +5,18 @@ import { useCategories } from '../model/useCategories';
 interface CategorySidebarProps {
   activeId: number | null; // null = "All Categories"
   onSelect: (categoryId: number | null) => void;
+  /** Bumped by the view to re-fetch counts after a delete (board 6.3). */
+  refreshKey?: number;
 }
 
 /** Left sidebar: All Categories + each category with a colour dot and note
  * count; selecting one sets the active filter (criteria 1.1, 1.2, 2.1–2.3). */
-export function CategorySidebar({ activeId, onSelect }: CategorySidebarProps) {
-  const { categories, loading, error } = useCategories();
+export function CategorySidebar({
+  activeId,
+  onSelect,
+  refreshKey,
+}: CategorySidebarProps) {
+  const { categories, loading, error } = useCategories(refreshKey);
 
   return (
     <nav className="sidebar" aria-label="Categories">

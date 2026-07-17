@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 
 import { useNoteLock } from '@/features/note-lock';
 import { usePresence } from '@/features/note-presence';
@@ -25,8 +26,16 @@ function CloseIcon() {
   );
 }
 
-/** Full-screen note editor (criteria 1.3, 2.1–2.4, 3.1–3.3, 4.1). */
-export function NoteEditor({ noteId }: { noteId: string }) {
+/** Full-screen note editor (criteria 1.2–1.4, 2.1–2.4, 3.1–3.3, 4.1). When
+ * `draft` is set the note is created on the first keystroke (deferred creation);
+ * once persisted the `?new=1` flag is dropped so a reload loads the saved note. */
+export function NoteEditor({
+  noteId,
+  draft = false,
+}: {
+  noteId: string;
+  draft?: boolean;
+}) {
   const router = useRouter();
   const {
     note,
@@ -37,13 +46,26 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     saveError,
     error,
     notice,
+    persisted,
     onTitleChange,
     onContentChange,
     changeCategory,
     flushNow,
-  } = useNoteEditor(noteId);
-  const { readOnly } = useNoteLock(noteId);
+  } = useNoteEditor(noteId, draft);
+  // A draft note doesn't exist server-side until its first keystroke — only
+  // acquire the advisory lock once it's persisted (notes 1.1/1.2).
+  const { readOnly } = useNoteLock(noteId, !draft || persisted);
   const presenceCount = usePresence(noteId);
+
+  // Once a draft is persisted, drop `?new=1` so a reload loads the saved note
+  // instead of starting a fresh draft (notes design — deferred creation).
+  const droppedNew = useRef(false);
+  useEffect(() => {
+    if (draft && persisted && !droppedNew.current) {
+      droppedNew.current = true;
+      router.replace(`/notes/${noteId}`);
+    }
+  }, [draft, persisted, noteId, router]);
 
   function status(lastEditedAt: string): string {
     if (saving) return 'Saving…';
