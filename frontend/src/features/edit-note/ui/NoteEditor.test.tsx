@@ -27,9 +27,21 @@ const NOTE = {
 };
 
 const CATS = [
-  { id: 1, name: 'Random Thoughts', color: '#EF9C66', is_default: true },
-  { id: 2, name: 'School', color: '#FCDC94', is_default: true },
-  { id: 3, name: 'Personal', color: '#78ABA8', is_default: true },
+  {
+    id: 1,
+    name: 'Random Thoughts',
+    color: '#EF9C66',
+    is_default: true,
+    note_count: 0,
+  },
+  { id: 2, name: 'School', color: '#FCDC94', is_default: true, note_count: 0 },
+  {
+    id: 3,
+    name: 'Personal',
+    color: '#78ABA8',
+    is_default: true,
+    note_count: 0,
+  },
 ];
 
 function setup() {

@@ -190,3 +190,43 @@ def test_category_default_and_ownership_lookups() -> None:
 
     with pytest.raises(CategoryNotFound):
         cats.get_default_for_owner(bob.pk)
+
+
+def test_list_with_counts_is_correct_and_owner_scoped() -> None:
+    # covers board 1.2 — annotated per-category note counts, scoped to the owner
+    alice = _user("alice@b.com")
+    bob = _user("bob@b.com")
+    cats = DjangoCategoryRepository()
+    notes = DjangoNoteRepository()
+    a_random = _category(cats, alice.pk)
+    a_school = cats.add(
+        Category(id=None, name="School", color="#FCDC94", owner_id=alice.pk)
+    ).id
+    _category(cats, bob.pk)  # bob's own category
+
+    for _ in range(2):
+        notes.add(
+            Note(
+                id=None,
+                title="",
+                content="",
+                category_id=a_random,
+                owner_id=alice.pk,
+                last_edited_at=T0,
+            )
+        )
+    notes.add(
+        Note(
+            id=None,
+            title="",
+            content="",
+            category_id=a_school,
+            owner_id=alice.pk,
+            last_edited_at=T0,
+        )
+    )
+
+    counts = {c.category.name: c.note_count for c in cats.list_with_counts(alice.pk)}
+    assert counts == {"Random Thoughts": 2, "School": 1}
+    # bob sees only his own (empty) category
+    assert [c.note_count for c in cats.list_with_counts(bob.pk)] == [0]

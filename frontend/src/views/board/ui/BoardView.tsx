@@ -1,27 +1,35 @@
 'use client';
 
-import { useSession } from '@/entities/session';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
 import { CreateNoteButton } from '@/features/create-note';
 import { LogoutButton } from '@/features/log-out';
+import { CategorySidebar } from '@/widgets/category-sidebar';
+import { NoteGrid } from '@/widgets/note-grid';
 
-/** Board the user lands on after auth (criteria 1.2 / 2.2). The full sidebar +
- * note grid arrive with specs/board; the "+ New Note" action ships with notes. */
+/** The board: category sidebar + note grid, with a category filter (specs/board).
+ * The empty state lives inside the grid; the sidebar + New Note always show. */
 export function BoardView() {
-  const session = useSession();
+  const router = useRouter();
+  const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
 
   return (
-    <main className="board-screen">
-      <header className="board-header">
-        <h1 className="board-title">Your Notes</h1>
-        <div className="board-actions">
-          <CreateNoteButton />
-          <LogoutButton />
-        </div>
+    <main className="board">
+      <header className="board__topbar">
+        <CreateNoteButton />
+        <LogoutButton />
       </header>
-      <p className="board-placeholder">
-        Signed in as {session?.user.email}. The sidebar and note grid arrive
-        with the board spec — for now, “+ New Note” opens the editor.
-      </p>
+      <div className="board__body">
+        <CategorySidebar
+          activeId={activeCategoryId}
+          onSelect={setActiveCategoryId}
+        />
+        <NoteGrid
+          categoryId={activeCategoryId}
+          onOpen={(noteId) => router.push(`/notes/${noteId}`)}
+        />
+      </div>
     </main>
   );
 }

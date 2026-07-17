@@ -122,5 +122,15 @@ class NoteDetailView(APIView):
 class CategoriesView(APIView):
     def get(self, request: Request) -> Response:
         owner_id = request.user.pk
-        categories = category_service().list(owner_id)
-        return Response([CategoryOutSerializer(c).data for c in categories])
+        items = category_service().list_with_counts(owner_id)
+        data: list[dict[str, object]] = [
+            {
+                "id": item.category.id,
+                "name": item.category.name,
+                "color": item.category.color,
+                "is_default": item.category.is_default,
+                "note_count": item.note_count,
+            }
+            for item in items
+        ]
+        return Response([CategoryOutSerializer(row).data for row in data])

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatEditedAt, formatShortDate } from './date';
+import { formatEditedAt, formatRelativeDate } from './date';
 
 describe('date formatters', () => {
   it('formats the editor last-edited label', () => {
@@ -18,8 +18,26 @@ describe('date formatters', () => {
       'January 1, 2024 at 12:00pm',
     );
   });
+});
 
-  it('formats a short card date', () => {
-    expect(formatShortDate('2024-06-12T09:00:00')).toBe('June 12');
+describe('formatRelativeDate', () => {
+  const now = new Date('2024-07-21T15:00:00');
+
+  it('shows "today" for a note edited today', () => {
+    // covers 4.1
+    expect(formatRelativeDate('2024-07-21T09:00:00', now)).toBe('today');
+    // boundary: just after local midnight today is still "today"
+    expect(formatRelativeDate('2024-07-21T00:01:00', now)).toBe('today');
+  });
+
+  it('shows "yesterday" for a note edited yesterday', () => {
+    // covers 4.2
+    expect(formatRelativeDate('2024-07-20T23:59:00', now)).toBe('yesterday');
+  });
+
+  it('shows the month and day (no year) for older notes', () => {
+    // covers 4.3
+    expect(formatRelativeDate('2024-07-16T12:00:00', now)).toBe('July 16');
+    expect(formatRelativeDate('2023-01-05T12:00:00', now)).toBe('January 5');
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { formatShortDate, withAlpha } from '@/shared/lib';
+import { formatRelativeDate, withAlpha } from '@/shared/lib';
 
 import type { Note } from '../model/types';
 
@@ -23,7 +23,7 @@ export function NoteCard({
     >
       <span className="note-card__meta">
         <span className="note-card__date">
-          {formatShortDate(note.last_edited_at)}
+          {formatRelativeDate(note.last_edited_at)}
         </span>
         <span className="note-card__category">{name}</span>
       </span>

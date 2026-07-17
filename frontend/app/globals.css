@@ -184,53 +184,59 @@ body {
   font-size: 12px;
 }
 
-/* ---- Board placeholder ---- */
-.board-screen {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 32px 24px;
+/* ---- Board ---- */
+.board {
+  min-height: 100vh;
+  background: var(--color-cream);
+  padding: 32px 34px;
 }
 
-.board-header {
+.board__topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: 43px;
 }
 
-.board-title {
-  font-family: var(--font-serif);
-  color: var(--color-heading);
-  margin: 0;
+.board__body {
+  display: flex;
+  gap: 32px;
+  margin-top: 24px;
 }
 
 .logout-button {
   border: 1px solid var(--color-accent);
-  background: var(--color-surface);
+  background: transparent;
   color: var(--color-accent);
-  border-radius: 8px;
-  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  padding: 9px 16px;
+  font-family: var(--font-sans);
   cursor: pointer;
 }
 
-.board-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
 .new-note-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid var(--color-accent);
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-accent);
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 15px;
-  padding: 9px 18px;
+  font-size: 16px;
+  padding: 11px 16px;
   cursor: pointer;
   transition:
     background-color 0.15s ease,
     color 0.15s ease;
+}
+
+.new-note-button__icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
 }
 
 .new-note-button:hover:not(:disabled) {
@@ -241,6 +247,102 @@ body {
 .new-note-button:disabled {
   opacity: 0.6;
   cursor: progress;
+}
+
+/* ---- Category sidebar ---- */
+.sidebar {
+  flex: 0 0 256px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: #000;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar__row--all {
+  font-weight: 700;
+}
+
+.sidebar__row.is-active {
+  background: rgba(149, 113, 57, 0.12);
+  font-weight: 700;
+}
+
+.sidebar__dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sidebar__name {
+  flex: 1;
+}
+
+.sidebar__count {
+  color: #000;
+}
+
+.sidebar__loading {
+  padding: 9px 16px;
+  font-size: 12px;
+  color: var(--color-placeholder);
+}
+
+/* ---- Note grid (masonry) ---- */
+.note-grid {
+  flex: 1;
+  columns: 3 280px;
+  column-gap: 16px;
+}
+
+.note-grid > .note-card {
+  width: 100%;
+  margin-bottom: 16px;
+  break-inside: avoid;
+}
+
+.note-grid__status {
+  flex: 1;
+  padding: 24px 0;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+}
+
+.note-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 96px;
+  gap: 8px;
+}
+
+.note-empty__art {
+  height: auto;
+  max-width: 297px;
+}
+
+.note-empty__text {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 24px;
+  color: var(--color-heading);
+  text-align: center;
 }
 
 /* ---- Note card (board preview) ---- */

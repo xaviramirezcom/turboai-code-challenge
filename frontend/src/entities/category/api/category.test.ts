@@ -7,7 +7,13 @@ afterEach(() => vi.restoreAllMocks());
 describe('category api', () => {
   it('GETs /categories/ and returns typed categories', async () => {
     const rows = [
-      { id: 1, name: 'School', color: '#FCDC94', is_default: true },
+      {
+        id: 1,
+        name: 'School',
+        color: '#FCDC94',
+        is_default: true,
+        note_count: 3,
+      },
     ];
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

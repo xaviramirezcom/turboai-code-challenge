@@ -27,6 +27,8 @@ describe('NoteCard', () => {
 
     const card = screen.getByRole('button');
     expect(card).toHaveStyle({ backgroundColor: 'rgba(239, 156, 102, 0.5)' });
+    // 3.3 — overflow content is truncated by the clamped preview element
+    expect(screen.getByText('Milk, Eggs')).toHaveClass('note-card__preview');
   });
 
   it('calls onOpen when clicked', async () => {

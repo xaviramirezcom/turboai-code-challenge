@@ -4,11 +4,15 @@ the transaction boundary. No Django imports.
 
 from uuid import UUID
 
-from ..domain.entities import Category, Note
+from ..domain.entities import Category, CategoryWithCount, Note
 from ..domain.exceptions import CategoryNotFound, ForeignCategory
 from ..domain.repositories import CategoryRepository, NoteRepository
 from .commands import CreateNote, UpdateNote
 from .ports import Clock, EventPublisher, UnitOfWork
+
+# Module-scope alias: `CategoryService.list` shadows builtin `list` inside the
+# class body, so annotate list-returning methods defined after it via an alias.
+CategoryCountList = list[CategoryWithCount]
 
 
 class NoteService:
@@ -113,6 +117,9 @@ class CategoryService:
 
     def list(self, owner_id: int) -> list[Category]:
         return self._categories.list_for_owner(owner_id)
+
+    def list_with_counts(self, owner_id: int) -> CategoryCountList:
+        return self._categories.list_with_counts(owner_id)
 
     def get(self, owner_id: int, category_id: int) -> Category:
         category = self._categories.get_for_owner(category_id, owner_id)

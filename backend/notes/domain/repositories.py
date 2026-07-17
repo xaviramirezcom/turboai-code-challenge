@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from .entities import Category, Note
+from .entities import Category, CategoryWithCount, Note
 
 
 class CategoryRepository(ABC):
@@ -12,6 +12,10 @@ class CategoryRepository(ABC):
 
     @abstractmethod
     def list_for_owner(self, owner_id: int) -> list[Category]: ...
+
+    @abstractmethod
+    def list_with_counts(self, owner_id: int) -> list[CategoryWithCount]:
+        """The owner's categories, each with its total note count (board 1.2)."""
 
     @abstractmethod
     def get_default_for_owner(self, owner_id: int) -> Category:

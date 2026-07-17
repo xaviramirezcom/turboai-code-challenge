@@ -38,9 +38,17 @@ export function formatEditedAt(iso: string): string {
   return `${month} ${day}, ${year} at ${hours}:${minutes}${ampm}`;
 }
 
-/** Short date for a note card header, e.g. "July 21". Board refines this to
- * relative "today/yesterday" (board spec, Requirement 4). */
-export function formatShortDate(iso: string): string {
-  const { month, day } = parts(iso);
+/** Note card date (board Requirement 4), user-local:
+ * today → "today"; yesterday → "yesterday"; older → "July 16" (no year). */
+export function formatRelativeDate(
+  iso: string,
+  now: Date = new Date(),
+): string {
+  const { d, month, day } = parts(iso);
+  const startOfDay = (x: Date): number =>
+    new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86_400_000);
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
   return `${month} ${day}`;
 }

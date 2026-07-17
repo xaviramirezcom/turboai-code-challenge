@@ -29,7 +29,7 @@ describe('CreateNoteButton', () => {
     });
 
     render(<CreateNoteButton />);
-    await user.click(screen.getByRole('button', { name: '+ New Note' }));
+    await user.click(screen.getByRole('button', { name: 'New Note' }));
 
     expect(mockedCreate).toHaveBeenCalledOnce();
     expect(push).toHaveBeenCalledWith('/notes/new-id');

@@ -28,6 +28,14 @@ class Category:
             raise InvalidCategory(f"colour must be a #RRGGBB hex, got {self.color!r}")
 
 
+@dataclass(frozen=True)
+class CategoryWithCount:
+    """A category plus its total note count — the board sidebar read model (1.2)."""
+
+    category: Category
+    note_count: int
+
+
 @dataclass
 class Note:
     """A note. Title and content MAY be empty (created empty, filled later).

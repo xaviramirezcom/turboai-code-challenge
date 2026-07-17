@@ -5,7 +5,9 @@ Repositories return domain entities, never ORM objects.
 
 from uuid import UUID
 
-from ..domain.entities import Category, Note
+from django.db.models import Count
+
+from ..domain.entities import Category, CategoryWithCount, Note
 from ..domain.exceptions import CategoryNotFound, NoteNotFound
 from ..domain.repositories import CategoryRepository, NoteRepository
 from .mappers import category_to_domain, note_to_domain
@@ -26,6 +28,31 @@ class DjangoCategoryRepository(CategoryRepository):
         return [
             category_to_domain(orm)
             for orm in CategoryORM.objects.filter(owner_id=owner_id)
+        ]
+
+    def list_with_counts(self, owner_id: int) -> list[CategoryWithCount]:
+        # One annotated query (not per-row). `.values()` keeps the count off the
+        # ORM instance so it maps cleanly to the domain read model.
+        # Explicit order_by: annotate() + values() drops Meta.ordering, so pin the
+        # seeded order (id asc = Random Thoughts, School, Personal) deterministically.
+        rows = (
+            CategoryORM.objects.filter(owner_id=owner_id)
+            .annotate(note_count=Count("notes"))
+            .values("id", "name", "color", "is_default", "note_count")
+            .order_by("id")
+        )
+        return [
+            CategoryWithCount(
+                category=Category(
+                    id=row["id"],
+                    name=row["name"],
+                    color=row["color"],
+                    owner_id=owner_id,
+                    is_default=row["is_default"],
+                ),
+                note_count=row["note_count"],
+            )
+            for row in rows
         ]
 
     def get_default_for_owner(self, owner_id: int) -> Category:

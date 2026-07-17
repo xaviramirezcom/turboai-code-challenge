@@ -2,8 +2,6 @@
 
 from rest_framework import serializers
 
-from ..domain.entities import Category
-
 
 class NoteCreateSerializer(serializers.Serializer[dict[str, object]]):
     category_id = serializers.IntegerField(required=False)
@@ -15,11 +13,12 @@ class NoteUpdateSerializer(serializers.Serializer[dict[str, object]]):
     category_id = serializers.IntegerField(required=False)
 
 
-class CategoryOutSerializer(serializers.Serializer[Category]):
+class CategoryOutSerializer(serializers.Serializer[dict[str, object]]):
     id = serializers.IntegerField()
     name = serializers.CharField()
     color = serializers.CharField()
     is_default = serializers.BooleanField()
+    note_count = serializers.IntegerField()
 
 
 class NoteCategoryOutSerializer(serializers.Serializer[dict[str, object]]):
