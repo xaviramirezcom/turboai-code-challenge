@@ -25,8 +25,10 @@ seeds categories that the other specs depend on).
      _Figma: unlinked (see requirements.md → Figma status)_ · _Tests: toggles masking_
 - [x] 5. `entities/session`: token + current user store; attach `Authorization`
      in `shared/api`. _Covers: 4.1_ · _Tests: header attached; cleared on logout_
-- [x] 6. `features/sign-up` + `features/log-in` (+ `log-out`, `require-auth`)
-     forms; navigation links; route guard. _Covers: 1.1–1.3, 2.1–2.3, 3.1, 4.1_ ·
+- [x] 6. `features/sign-up` + `features/log-in` (+ `require-auth`) forms;
+     navigation links; route guard. The `log-out` slice was built and then
+     removed — the endpoint stays, the UI does not (requirements.md → Open
+     questions). _Covers: 1.1–1.3, 2.1–2.3, 3.1, 4.1_ ·
      _Figma: unlinked_ · _Tests (mocked api): submit, invalid errors, links switch
      screens, success → board, guard redirects_
 

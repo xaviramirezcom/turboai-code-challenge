@@ -76,8 +76,13 @@ user; a user SHALL never see another user's data.
 - [x] Password policy (min length, etc.). **Decided: ≥8 chars, enforced via
       Django's `AUTH_PASSWORD_VALIDATORS` (`MinimumLengthValidator` len 8 +
       common/numeric validators).** Reported as a field-level error (1.3).
-- [x] Is logout in scope? **Decided: yes.** `POST /api/auth/logout/` deletes the
-      caller's token → 204; the client clears the session store.
+- [x] Is logout in scope? **Decided: backend only.** `POST /api/auth/logout/`
+      deletes the caller's token → 204 and stays covered by backend tests, but
+      **no UI exposes it** — the `features/log-out` slice was removed and the
+      board topbar has no logout control. A session ends when the tab closes
+      (the token lives in `sessionStorage`, per the storage decision in
+      `design.md`). Re-adding a logout affordance means restoring that slice and
+      wiring `clearSession()` to it; the endpoint is already there.
 - [x] Does login show a password visibility toggle too? Figma frame is unlinked
       (see below). **Decided: yes — both screens reuse `shared/ui/password-input`
       for consistency and accessibility.**

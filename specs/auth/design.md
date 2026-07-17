@@ -17,7 +17,7 @@ Keep it small and standard: Django's user, DRF token auth, a seed-on-signup hook
 | ------ | ------------------- | ------------------- | -------------------------------------- | ------------- |
 | POST   | `/api/auth/signup/` | `{email, password}` | 201 `{token, user}` + seeds categories | 1.1–1.3, 1.5  |
 | POST   | `/api/auth/login/`  | `{email, password}` | 200 `{token, user}`                    | 2.1–2.3       |
-| POST   | `/api/auth/logout/` | –                   | 204 (invalidate token)                 | open question |
+| POST   | `/api/auth/logout/` | –                   | 204 (invalidate token)                 | no UI caller  |
 
 - Auth: `Authorization: Token <token>` (DRF `TokenAuthentication`) _(confirm
   choice)_. All other endpoints use `IsAuthenticated`.
@@ -56,7 +56,9 @@ illustrations are exported to `frontend/public/auth/` (cats 34:899, cactus
   to `shared/api`) and are mirrored to **`sessionStorage`** (per-tab, cleared on
   tab close — not `localStorage`). A root `SessionProvider` calls `rehydrate()`
   once on load so a page refresh keeps the user signed in without a whoami
-  round-trip. Logout clears both the memory store and `sessionStorage`.
+  round-trip. `clearSession()` clears both the memory store and `sessionStorage`;
+  with the logout UI removed it has no caller today (see requirements.md → Open
+  questions), so in practice a session ends when the tab closes.
 
 ## Testing strategy
 

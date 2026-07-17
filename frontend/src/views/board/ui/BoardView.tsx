@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { CreateNoteButton } from '@/features/create-note';
-import { LogoutButton } from '@/features/log-out';
 import { CategorySidebar } from '@/widgets/category-sidebar';
 import { NoteGrid } from '@/widgets/note-grid';
 
@@ -20,7 +19,6 @@ export function BoardView() {
     <main className="board">
       <header className="board__topbar">
         <CreateNoteButton />
-        <LogoutButton />
       </header>
       <div className="board__body">
         <CategorySidebar
