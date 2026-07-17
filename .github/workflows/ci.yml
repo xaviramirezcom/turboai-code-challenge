@@ -1,0 +1,66 @@
+name: CI
+
+# Ground truth for test integrity. This runs on GitHub's servers, on the tests
+# exactly as committed. Claude cannot fake, skip, or weaken this run — the
+# green/red check is what a reviewer sees on your PR. Local hooks make cheating
+# hard; this makes it visible.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (Django/DRF)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Lint (ruff)
+        run: ruff check . && ruff format --check .
+      - name: Type check (mypy)
+        run: mypy .
+      - name: Architecture boundaries (import-linter)
+        run: lint-imports
+      - name: Django system check
+        run: python manage.py check
+      - name: Tests + coverage floor
+        # --cov-fail-under enforces the coverage minimum. Lowering it shows up
+        # in the diff and in this file's history.
+        run: pytest --cov=. --cov-report=term-missing --cov-fail-under=85
+
+  frontend:
+    name: Frontend (Next.js/React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Format check
+        run: npm run format:check
+      - name: Type check
+        run: npm run typecheck
+      - name: Architecture boundaries (FSD / dependency-cruiser)
+        run: npm run arch
+      - name: Tests + coverage
+        run: npm test -- --coverage --run

@@ -1,0 +1,64 @@
+# Enforces the hexagonal dependency rule. Run with `lint-imports` (pip install
+# import-linter). Wired into /verify, CI, and the pre-commit hook.
+#
+# NOTES
+# - List a package under root_packages only if it EXISTS in the repo; import-linter
+#   errors on a missing root package. Add contexts here as you create them.
+# - `notes` is a bounded context (4 layers). `observability` is a flat support
+#   module, so it has no inward-layers contract — only the independence rule below.
+# - Modern import-linter/grimp analyse imports statically (they do not execute your
+#   code), so Django model modules are fine. If you pin an older version that
+#   imports modules, set DJANGO_SETTINGS_MODULE before running lint-imports.
+
+[importlinter]
+# Required because the purity contract forbids EXTERNAL packages (django,
+# rest_framework). Without this, lint-imports errors out before checking anything.
+include_external_packages = True
+root_packages =
+    notes
+    observability
+    shared
+
+[importlinter:contract:notes-inward]
+name = Notes: dependencies point inward (interface -> application -> domain)
+type = layers
+layers =
+    notes.interface
+    notes.application
+    notes.domain
+
+[importlinter:contract:notes-purity]
+name = Notes: domain and application are framework-, adapter-, and log-free
+type = forbidden
+source_modules =
+    notes.domain
+    notes.application
+forbidden_modules =
+    django
+    rest_framework
+    notes.infrastructure
+    notes.interface
+    observability
+# Domain/application publish events via the EventPublisher PORT, so they must not
+# import `observability` directly — only notes.infrastructure (the adapter) may.
+# The composition root (notes.container) is also allowed to import adapters; it is
+# not part of the source_modules above.
+
+[importlinter:contract:contexts-independent]
+name = Support module does not depend on a bounded context
+type = forbidden
+source_modules =
+    observability
+forbidden_modules =
+    notes
+
+[importlinter:contract:shared-is-generic]
+name = Shared kernel stays generic (no context/framework knowledge)
+type = forbidden
+source_modules =
+    shared
+forbidden_modules =
+    notes
+    observability
+    django
+    rest_framework

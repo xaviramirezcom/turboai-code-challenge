@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Local pre-commit gate. Runs the fast checks before a commit is allowed, so a
+# broken or test-weakening change can't enter the history in the first place.
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+# (Bypassing it with --no-verify is separately blocked by the Claude Code
+#  block-dangerous.sh hook, so the agent can't route around this.)
+#
+# NOTE: this is deliberately a FAST subset (lint, format, arch, tests). The full
+# gate — incl. mypy and `npm run format:check` — runs in CI (.github/workflows/
+# ci.yml), which is the authoritative check on the PR.
+
+set -uo pipefail
+fail=0
+
+changed() { git diff --cached --name-only --diff-filter=ACM; }
+
+if changed | grep -q '^backend/.*\.py$'; then
+  echo "▶ backend checks…"
+  ( cd backend \
+    && ruff check . \
+    && ruff format --check . \
+    && lint-imports \
+    && pytest -q --cov=. --cov-fail-under=85 ) || fail=1
+fi
+
+if changed | grep -qE '^frontend/.*\.(ts|tsx|js|jsx)$'; then
+  echo "▶ frontend checks…"
+  ( cd frontend \
+    && npm run lint --silent \
+    && npm run typecheck --silent \
+    && npm run arch --silent \
+    && npm test --silent -- --run ) || fail=1
+fi
+
+# Refuse to commit staged tests that are skipped or focused.
+if changed | grep -qE '(test_.*\.py|_test\.py|\.test\.|\.spec\.|__tests__)'; then
+  if git diff --cached | grep -qE '^\+.*(@pytest\.mark\.skip|pytest\.skip\(|it\.skip|test\.skip|describe\.skip|\.only\(|xit\(|@pytest\.mark\.xfail)'; then
+    echo "✖ commit blocked: staged tests contain skip/only/xfail markers."
+    fail=1
+  fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo "✖ pre-commit checks failed — commit aborted."
+  exit 1
+fi
+echo "✓ pre-commit checks passed."
+exit 0

@@ -1,0 +1,11 @@
+{
+  "_comment": "Copy this to settings.local.json (which is gitignored) for personal, machine-specific overrides. Do NOT commit settings.local.json. Anything here overrides settings.json for you only.",
+  "permissions": {
+    "allow": [
+      "Bash(docker compose *)"
+    ]
+  },
+  "env": {
+    "_comment": "Machine-specific paths or non-secret toggles can go here."
+  }
+}
