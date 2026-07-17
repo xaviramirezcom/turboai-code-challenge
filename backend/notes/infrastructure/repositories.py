@@ -7,7 +7,7 @@ from uuid import UUID
 
 from django.db.models import Count
 
-from ..domain.entities import Category, CategoryWithCount, Note
+from ..domain.entities import Category, CategoryWithCount, Note, NoteView
 from ..domain.exceptions import CategoryNotFound, NoteNotFound
 from ..domain.repositories import CategoryRepository, NoteRepository
 from .mappers import category_to_domain, note_to_domain
@@ -116,6 +116,30 @@ class DjangoNoteRepository(NoteRepository):
         if category_id is not None:
             qs = qs.filter(category_id=category_id)
         return [note_to_domain(orm) for orm in qs]
+
+    def list_for_owner_with_category(
+        self, owner_id: int, category_id: int | None = None
+    ) -> list[NoteView]:
+        qs = NoteORM.objects.filter(owner_id=owner_id).select_related("category")
+        if category_id is not None:
+            qs = qs.filter(category_id=category_id)
+        return [
+            NoteView(
+                note=note_to_domain(orm), category=category_to_domain(orm.category)
+            )
+            for orm in qs
+        ]
+
+    def get_with_category(self, note_id: UUID, owner_id: int) -> NoteView:
+        try:
+            orm = NoteORM.objects.select_related("category").get(
+                pk=note_id, owner_id=owner_id
+            )
+        except NoteORM.DoesNotExist as exc:
+            raise NoteNotFound(str(note_id)) from exc
+        return NoteView(
+            note=note_to_domain(orm), category=category_to_domain(orm.category)
+        )
 
     def delete(self, note_id: UUID, owner_id: int) -> None:
         deleted, _ = NoteORM.objects.filter(pk=note_id, owner_id=owner_id).delete()

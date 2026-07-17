@@ -40,6 +40,16 @@ def test_request_row_still_written_when_view_raises() -> None:
 
 
 @pytest.mark.django_db
+def test_options_preflight_is_not_logged() -> None:
+    rf = RequestFactory()
+    mw = RequestLogMiddleware(lambda _req: HttpResponse(status=200))
+
+    mw(rf.options("/api/notes/"))
+
+    assert RequestLog.objects.count() == 0
+
+
+@pytest.mark.django_db
 def test_process_exception_writes_error_log() -> None:
     rf = RequestFactory()
     mw = RequestLogMiddleware(lambda _req: HttpResponse())

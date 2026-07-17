@@ -230,3 +230,28 @@ def test_list_with_counts_is_correct_and_owner_scoped() -> None:
     assert counts == {"Random Thoughts": 2, "School": 1}
     # bob sees only his own (empty) category
     assert [c.note_count for c in cats.list_with_counts(bob.pk)] == [0]
+
+
+def test_list_with_category_joins_in_a_single_query(django_assert_num_queries) -> None:
+    # perf: select_related folds each note's category into one query (no N+1)
+    user = _user("a@b.com")
+    cats = DjangoCategoryRepository()
+    notes = DjangoNoteRepository()
+    category_id = _category(cats, user.pk)
+    for _ in range(3):
+        notes.add(
+            Note(
+                id=None,
+                title="",
+                content="",
+                category_id=category_id,
+                owner_id=user.pk,
+                last_edited_at=T0,
+            )
+        )
+
+    with django_assert_num_queries(1):
+        views = notes.list_for_owner_with_category(user.pk)
+        # accessing the joined category must not trigger extra queries
+        _ = [v.category.name for v in views]
+    assert len(views) == 3

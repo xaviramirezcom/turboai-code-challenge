@@ -36,6 +36,15 @@ class CategoryWithCount:
     note_count: int
 
 
+@dataclass(frozen=True)
+class NoteView:
+    """A note plus its category — the read projection for API serialization,
+    fetched in one ``select_related`` query so no second round-trip is needed."""
+
+    note: "Note"
+    category: Category
+
+
 @dataclass
 class Note:
     """A note. Title and content MAY be empty (created empty, filled later).

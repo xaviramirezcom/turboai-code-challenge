@@ -32,17 +32,20 @@ class RequestLogMiddleware:
             status = response.status_code
             return response
         finally:
-            user = getattr(getattr(request, "user", None), "username", None) or None
-            RequestLog.objects.create(
-                request_id=rid,
-                method=request.method or "",
-                path=request.path[:500],
-                status_code=status,
-                duration_ms=int((time.monotonic() - start) * 1000),
-                user=user,
-                ip=request.META.get("REMOTE_ADDR"),
-                metadata=redact({"query": dict(request.GET)}),
-            )
+            # Skip CORS preflights — they carry no operation, and dropping the
+            # write saves a DB round-trip on every cross-origin call.
+            if request.method != "OPTIONS":
+                user = getattr(getattr(request, "user", None), "username", None) or None
+                RequestLog.objects.create(
+                    request_id=rid,
+                    method=request.method or "",
+                    path=request.path[:500],
+                    status_code=status,
+                    duration_ms=int((time.monotonic() - start) * 1000),
+                    user=user,
+                    ip=request.META.get("REMOTE_ADDR"),
+                    metadata=redact({"query": dict(request.GET)}),
+                )
 
     def process_exception(
         self, request: HttpRequest, exc: Exception

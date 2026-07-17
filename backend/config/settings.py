@@ -64,6 +64,12 @@ TEMPLATES = [
 DATABASES = {
     "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
+# Persist DB connections across requests. Against a remote Supabase Postgres a
+# fresh connection per request costs ~1.5s (TLS + auth handshake); reusing it
+# drops a warm request to a single round-trip. CONN_HEALTH_CHECKS reopens a
+# connection Supabase dropped while idle, so persistence is safe.
+DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=600)
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {

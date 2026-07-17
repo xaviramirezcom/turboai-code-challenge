@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from .entities import Category, CategoryWithCount, Note
+from .entities import Category, CategoryWithCount, Note, NoteView
 
 
 class CategoryRepository(ABC):
@@ -45,6 +45,16 @@ class NoteRepository(ABC):
     def list_for_owner(
         self, owner_id: int, category_id: int | None = None
     ) -> list[Note]: ...
+
+    @abstractmethod
+    def list_for_owner_with_category(
+        self, owner_id: int, category_id: int | None = None
+    ) -> list[NoteView]:
+        """Owner-scoped list with each note's category joined (one query)."""
+
+    @abstractmethod
+    def get_with_category(self, note_id: UUID, owner_id: int) -> NoteView:
+        """Owner-scoped read with the category joined. Raises NoteNotFound."""
 
     @abstractmethod
     def delete(self, note_id: UUID, owner_id: int) -> None:

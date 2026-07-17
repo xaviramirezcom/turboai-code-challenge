@@ -54,9 +54,12 @@ class NotesView(APIView):
                     {"category": ["Must be an integer id."]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-        notes = note_service().list(owner_id, category_id)
-        cats = {c.id: c for c in category_service().list(owner_id)}
-        data = [NoteOutSerializer(_payload(n, cats[n.category_id])).data for n in notes]
+        # One query joins each note's category (select_related) — no N+1, no
+        # separate categories round-trip.
+        views = note_service().list_with_category(owner_id, category_id)
+        data = [
+            NoteOutSerializer(_payload(view.note, view.category)).data for view in views
+        ]
         return Response(data)
 
     def post(self, request: Request) -> Response:
@@ -72,9 +75,10 @@ class NotesView(APIView):
             )
         except ForeignCategory:
             return Response(_FOREIGN_CATEGORY, status=status.HTTP_400_BAD_REQUEST)
-        category = category_service().get(owner_id, note.category_id)
+        assert note.id is not None
+        view = note_service().get_with_category(owner_id, note.id)
         return Response(
-            NoteOutSerializer(_payload(note, category)).data,
+            NoteOutSerializer(_payload(view.note, view.category)).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -83,18 +87,17 @@ class NoteDetailView(APIView):
     def get(self, request: Request, note_id: UUID) -> Response:
         owner_id = request.user.pk
         try:
-            note = note_service().get(owner_id, note_id)
+            view = note_service().get_with_category(owner_id, note_id)
         except NoteNotFound:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        category = category_service().get(owner_id, note.category_id)
-        return Response(NoteOutSerializer(_payload(note, category)).data)
+        return Response(NoteOutSerializer(_payload(view.note, view.category)).data)
 
     def patch(self, request: Request, note_id: UUID) -> Response:
         owner_id = request.user.pk
         body = NoteUpdateSerializer(data=request.data)
         body.is_valid(raise_exception=True)
         try:
-            note = note_service().update(
+            note_service().update(
                 UpdateNote(
                     owner_id=owner_id,
                     note_id=note_id,
@@ -107,8 +110,8 @@ class NoteDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         except ForeignCategory:
             return Response(_FOREIGN_CATEGORY, status=status.HTTP_400_BAD_REQUEST)
-        category = category_service().get(owner_id, note.category_id)
-        return Response(NoteOutSerializer(_payload(note, category)).data)
+        view = note_service().get_with_category(owner_id, note_id)
+        return Response(NoteOutSerializer(_payload(view.note, view.category)).data)
 
     def delete(self, request: Request, note_id: UUID) -> Response:
         owner_id = request.user.pk
