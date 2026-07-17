@@ -51,13 +51,39 @@ export function getSyncStatus(): SyncStatus {
   return syncStatus;
 }
 
-export function useSyncState(): { status: SyncStatus; pending: number } {
+export interface SyncState {
+  status: SyncStatus;
+  pending: number;
+}
+
+// useSyncExternalStore compares snapshots by reference (Object.is), so
+// getSnapshot MUST return a stable object and only mint a new one when the
+// underlying values change — otherwise every render looks like a store change
+// and React loops ("Maximum update depth exceeded").
+let syncSnapshot: SyncState = { status: syncStatus, pending: outbox.length };
+
+function getSyncSnapshot(): SyncState {
+  if (
+    syncSnapshot.status !== syncStatus ||
+    syncSnapshot.pending !== outbox.length
+  ) {
+    syncSnapshot = { status: syncStatus, pending: outbox.length };
+  }
+  return syncSnapshot;
+}
+
+const serverSyncSnapshot: SyncState = { status: 'idle', pending: 0 };
+
+export function useSyncState(): SyncState {
   return useSyncExternalStore(
     subscribe,
-    () => ({ status: syncStatus, pending: outbox.length }),
-    () => ({ status: 'idle' as SyncStatus, pending: 0 }),
+    getSyncSnapshot,
+    () => serverSyncSnapshot,
   );
 }
+
+/** Test hook: the raw getSnapshot, to assert reference stability. */
+export const _getSyncSnapshot = getSyncSnapshot;
 
 export function getConflicts(): Conflict[] {
   return conflicts;

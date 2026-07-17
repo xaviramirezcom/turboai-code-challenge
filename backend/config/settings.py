@@ -7,6 +7,7 @@ environment / a local ``.env`` — never in git. See ``.env.example``.
 from pathlib import Path
 
 import environ
+from corsheaders.defaults import default_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -47,6 +48,19 @@ MIDDLEWARE = [
 # Cross-origin: the Next.js dev server (http://localhost:3000) calls this API.
 # Token auth uses the Authorization header (not cookies), so credentials stay off.
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+
+# Always accept loopback origins on any port, regardless of the env allowlist, so
+# the app works whether it's opened at localhost:3000 OR 127.0.0.1:3000 (the
+# browser treats those as different origins). Loopback is the same machine, so
+# this is safe; real deployments are still gated by CORS_ALLOWED_ORIGINS above.
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
+]
+
+# The advisory-lock endpoints send an X-Session-Id header; it must be allowed in
+# the CORS preflight or the browser cancels the lock/heartbeat/unlock requests.
+CORS_ALLOW_HEADERS = (*default_headers, "x-session-id")
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"

@@ -15,7 +15,13 @@ const mockedCreate = vi.mocked(createNote);
 const mockedUpdate = vi.mocked(updateNote);
 
 // Import after mocks so the module's api references are mocked.
-import { _resetOutbox, enqueue, flush, getConflicts } from './outbox';
+import {
+  _getSyncSnapshot,
+  _resetOutbox,
+  enqueue,
+  flush,
+  getConflicts,
+} from './outbox';
 
 function patchOp(over: Partial<Op> = {}): Op {
   return {
@@ -61,6 +67,19 @@ describe('offline outbox', () => {
     expect(persisted).toHaveLength(1);
     expect(persisted[0]?.noteId).toBe('note-1');
     expect(persisted[0]?.baseVersion).toBe(1);
+  });
+
+  it('getSnapshot returns a stable reference until state changes (no render loop)', () => {
+    // regression: a fresh object each call makes useSyncExternalStore loop
+    // ("Maximum update depth exceeded")
+    const first = _getSyncSnapshot();
+    expect(_getSyncSnapshot()).toBe(first); // same ref, unchanged state
+
+    enqueue(patchOp());
+    const afterEnqueue = _getSyncSnapshot();
+    expect(afterEnqueue).not.toBe(first); // new ref, pending changed
+    expect(afterEnqueue.pending).toBe(1);
+    expect(_getSyncSnapshot()).toBe(afterEnqueue); // stable again
   });
 
   it('is idempotent on opId — enqueuing the same op twice keeps one', () => {

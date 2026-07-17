@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { heartbeatNote, lockNote, unlockNote } from '@/entities/note';
 import { ApiError } from '@/shared/api';
 
-import { HEARTBEAT_MS, useNoteLock } from './useNoteLock';
+import { HEARTBEAT_MS, RETRY_MS, useNoteLock } from './useNoteLock';
 
 vi.mock('@/entities/note', () => ({
   lockNote: vi.fn(),
@@ -55,8 +55,11 @@ describe('useNoteLock', () => {
   });
 
   it('goes read-only and stops heartbeating if a heartbeat is rejected (423)', async () => {
-    // covers 5.2/5.3 — losing the lock mid-session must not silently re-acquire it
-    mockedLock.mockResolvedValue({ locked_by: 'me', lock_expires_at: null });
+    // covers 5.2/5.3 — losing the lock mid-session must not keep heartbeating
+    // (the first call acquires; while locked, re-acquire attempts stay 423)
+    mockedLock
+      .mockResolvedValueOnce({ locked_by: 'me', lock_expires_at: null })
+      .mockRejectedValue(new ApiError(423, { locked_by: 'other' }));
     mockedUnlock.mockResolvedValue(null);
     vi.mocked(heartbeatNote).mockRejectedValue(
       new ApiError(423, { locked_by: 'other' }),
@@ -80,6 +83,32 @@ describe('useNoteLock', () => {
       await vi.advanceTimersByTimeAsync(HEARTBEAT_MS * 3); // no further beats
     });
     expect(vi.mocked(heartbeatNote).mock.calls.length).toBe(callsAfterFirst);
+  });
+
+  it('recovers to editable when the other session releases the lock (5.4)', async () => {
+    // regression: a read-only tab must not stay stuck after the editing tab
+    // closes — the next poll re-acquires the freed lock
+    mockedLock
+      .mockRejectedValueOnce(new ApiError(423, { locked_by: 'other' }))
+      .mockResolvedValue({ locked_by: 'me', lock_expires_at: null });
+    mockedUnlock.mockResolvedValue(null);
+    vi.mocked(heartbeatNote).mockResolvedValue({
+      locked_by: 'me',
+      lock_expires_at: null,
+    });
+    vi.useFakeTimers();
+
+    const { result } = renderHook(() => useNoteLock('n1'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0); // initial acquire → 423 (locked)
+    });
+    expect(result.current.readOnly).toBe(true);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RETRY_MS); // poll → lock now free → acquired
+    });
+    expect(result.current.status).toBe('editing');
+    expect(result.current.readOnly).toBe(false);
   });
 
   it('releases the lock on unmount', async () => {

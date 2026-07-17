@@ -11,8 +11,8 @@ afterEach(() => {
 
 describe('SessionProvider', () => {
   it('rehydrates a persisted session and renders its children', () => {
-    // covers 4.1 — reload persistence, wired at the app root
-    window.sessionStorage.setItem(
+    // covers 4.1 — reload/new-tab persistence, wired at the app root
+    window.localStorage.setItem(
       'turbo.session',
       JSON.stringify({ user: { id: 1, email: 'a@b.com' }, token: 'tk' }),
     );

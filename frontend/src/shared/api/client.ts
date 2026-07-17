@@ -25,6 +25,9 @@ interface RequestOptions {
   auth?: boolean;
   /** Extra request headers (e.g. X-Session-Id for the advisory lock). */
   headers?: Record<string, string>;
+  /** Let the request outlive the page (fetch keepalive) — used to release the
+   * note lock on tab close/pagehide. */
+  keepalive?: boolean;
 }
 
 async function request<T>(
@@ -32,7 +35,7 @@ async function request<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, auth = true, headers: extra } = options;
+  const { body, auth = true, headers: extra, keepalive } = options;
   const headers: Record<string, string> = { ...extra };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
 
@@ -43,6 +46,7 @@ async function request<T>(
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
+    keepalive,
   });
 
   const payload =

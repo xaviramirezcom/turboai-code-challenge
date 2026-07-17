@@ -60,8 +60,15 @@ export function heartbeatNote(
   });
 }
 
-export function unlockNote(id: string, sessionId: string): Promise<null> {
+/** Release the lock. `keepalive` lets the request complete after the tab is
+ * closed (pagehide), so a hard tab-close frees the note promptly (5.4). */
+export function unlockNote(
+  id: string,
+  sessionId: string,
+  keepalive = false,
+): Promise<null> {
   return api.post<null>(`/notes/${id}/unlock/`, undefined, {
     headers: { 'X-Session-Id': sessionId },
+    keepalive,
   });
 }

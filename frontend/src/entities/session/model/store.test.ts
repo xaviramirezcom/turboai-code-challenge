@@ -2,7 +2,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { getAuthToken } from '@/shared/api';
 
-import { clearSession, getSession, rehydrate, setSession } from './store';
+import {
+  _resetSession,
+  clearSession,
+  getSession,
+  rehydrate,
+  setSession,
+} from './store';
 
 afterEach(() => {
   clearSession();
@@ -30,12 +36,12 @@ describe('entities/session store', () => {
     expect(getAuthToken()).toBeNull();
   });
 
-  it('persists across a reload: rehydrate restores the session and token', () => {
-    // covers 4.1 — the session survives a page reload (design: in-memory + rehydrate)
+  it('persists across a reload and new tabs: rehydrate restores from localStorage', () => {
+    // covers 4.1 — the login is shared across tabs (design: localStorage + rehydrate)
     setSession({ id: 9, email: 'x@y.com' }, 'persisted-tok');
-    // Simulate a reload: the in-memory state is gone but sessionStorage remains.
-    clearSession();
-    window.sessionStorage.setItem(
+    // Simulate a fresh tab/reload: in-memory state is gone but localStorage remains.
+    _resetSession();
+    window.localStorage.setItem(
       'turbo.session',
       JSON.stringify({
         user: { id: 9, email: 'x@y.com' },
@@ -50,5 +56,13 @@ describe('entities/session store', () => {
       token: 'persisted-tok',
     });
     expect(getAuthToken()).toBe('persisted-tok');
+  });
+
+  it('setSession writes to localStorage so other tabs can pick it up', () => {
+    // covers 4.1 — cross-tab login sharing
+    setSession({ id: 3, email: 'c@d.com' }, 'tok-xyz');
+    const raw = window.localStorage.getItem('turbo.session');
+    expect(raw).not.toBeNull();
+    expect(JSON.parse(raw as string).token).toBe('tok-xyz');
   });
 });
