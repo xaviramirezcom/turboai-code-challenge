@@ -1,0 +1,113 @@
+"""Django settings for the Turbo AI notes backend.
+
+Configuration is environment-driven (django-environ). Secrets live only in the
+environment / a local ``.env`` — never in git. See ``.env.example``.
+"""
+
+from pathlib import Path
+
+import environ
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env(
+    DEBUG=(bool, False),
+    ALLOWED_HOSTS=(list, ["*"]),
+    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
+)
+
+# Load a local .env if present (never committed). CI/prod inject real env vars.
+environ.Env.read_env(BASE_DIR / ".env")
+
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="dev-insecure-key-change-me")
+DEBUG = env("DEBUG")
+ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+
+INSTALLED_APPS = [
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "observability",
+    "notes",
+]
+
+# RequestLogMiddleware sits outermost so it wraps (and logs) everything.
+# Auth is DRF TokenAuthentication (per-view), so Django's session-based
+# AuthenticationMiddleware is intentionally not installed.
+MIDDLEWARE = [
+    "observability.middleware.RequestLogMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.middleware.common.CommonMiddleware",
+]
+
+ROOT_URLCONF = "config.urls"
+WSGI_APPLICATION = "config.wsgi.application"
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {"context_processors": []},
+    },
+]
+
+# Supabase Postgres in prod via DATABASE_URL; SQLite locally / in CI tests.
+DATABASES = {
+    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+}
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
+
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = "static/"
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------------------------------------------------------------------------
+# Logging — app ERRORs are persisted as ErrorLog rows via the DB handler.
+# The DB handler is disabled during tests except where a test opts in.
+# ---------------------------------------------------------------------------
+LOG_TO_DB = env.bool("LOG_TO_DB", default=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {"format": "%(levelname)s %(name)s %(message)s"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "db": {
+            "class": "observability.handlers.DBLogHandler",
+            "level": "ERROR",
+        },
+    },
+    "root": {
+        "handlers": ["console"] + (["db"] if LOG_TO_DB else []),
+        "level": "INFO",
+    },
+}

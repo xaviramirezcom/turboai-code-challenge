@@ -1,0 +1,7 @@
+node_modules/
+.next/
+coverage/
+package-lock.json
+next-env.d.ts
+# Enforced-architecture config shipped with the repo scaffold (leave as-is).
+.dependency-cruiser.cjs

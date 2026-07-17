@@ -1,0 +1,74 @@
+[project]
+name = "turbo-notes-backend"
+version = "0.1.0"
+description = "Turbo AI notes app — Django/DRF backend (DDD / hexagonal)"
+requires-python = ">=3.11"
+
+# ---------------------------------------------------------------------------
+# Ruff — lint + format
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+extend-exclude = ["**/migrations/*"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, isort, bugbear, comprehensions, pyupgrade, naming
+select = ["E", "F", "I", "B", "C4", "UP", "N", "W"]
+# N818: domain exceptions follow the house style (e.g. NoteNotFound, EmptyTitle
+# in docs/ARCHITECTURE.md) rather than an -Error suffix.
+ignore = ["N818"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["N802", "N803", "N806"]
+"conftest.py" = ["E402"]
+
+# ---------------------------------------------------------------------------
+# mypy — strict, with django-stubs
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+exclude = ['(^|/)migrations/', '(^|/)tests/', 'conftest\.py', 'manage\.py']
+
+[[tool.mypy.overrides]]
+module = ["environ.*"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
+
+# ---------------------------------------------------------------------------
+# pytest + coverage
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+addopts = "-q"
+testpaths = ["accounts", "notes", "observability"]
+
+[tool.coverage.run]
+branch = true
+source = ["."]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "conftest.py",
+    "manage.py",
+    "config/wsgi.py",
+    "config/asgi.py",
+    "config/settings.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "\\.\\.\\.",
+    "def __repr__",
+]

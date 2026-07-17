@@ -1,0 +1,32 @@
+/* Design tokens — pulled from the Figma auth frames (Notes Taking App Challenge).
+ * Single source of truth for colours, type, spacing and radii used across the UI.
+ * Fonts (Inria Serif headings, Inter body) are loaded and self-hosted by
+ * next/font in app/layout.tsx, which exposes --font-inria-serif / --font-inter. */
+
+:root {
+  /* Brand palette */
+  --color-cream: #faf1e3; /* app background */
+  --color-heading: #88642a; /* serif headings */
+  --color-accent: #957139; /* borders, button text, links */
+  --color-accent-hover: #7a5c2c;
+  --color-field-bg: transparent; /* inputs sit on the page cream, not white */
+  --color-surface: #ffffff;
+  --color-ink: #2b2622; /* body + typed input text */
+  --color-placeholder: #8a7c63;
+  --color-error: #b3402e;
+  --color-line: #e2d8c4;
+
+  /* Type */
+  --font-serif: var(--font-inria-serif), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Radii */
+  --radius-field: 6px;
+  --radius-pill: 46px;
+
+  /* Auth layout */
+  --auth-card-width: 384px;
+  --auth-field-height: 39px;
+  --auth-field-gap: 13px;
+}

@@ -1,0 +1,213 @@
+@import '../src/shared/ui/theme/theme.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visually-hidden label — placeholder is the visible label in the Figma, but a
+   real <label> stays for screen readers and keyboard users. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Auth screens (signup / login) ---- */
+.auth-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--color-cream);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: var(--auth-card-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-illustration {
+  display: block;
+  height: auto;
+  margin-bottom: 28px;
+}
+
+.auth-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 1.1;
+  color: var(--color-heading);
+  text-align: center;
+  margin: 0 0 32px;
+}
+
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--auth-field-gap);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-input,
+.password-input input {
+  width: 100%;
+  height: var(--auth-field-height);
+  padding: 7px 15px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-field);
+  background: var(--color-field-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.auth-input::placeholder,
+.password-input input::placeholder {
+  color: var(--color-placeholder);
+}
+
+.auth-input:focus-visible,
+.password-input input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input input {
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.password-toggle svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.auth-submit {
+  margin-top: 30px;
+  height: 43px;
+  width: 100%;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-accent);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.auth-submit:hover:not(:disabled) {
+  background: var(--color-accent);
+  color: var(--color-surface);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.auth-switch {
+  margin: 13px 0 0;
+  text-align: center;
+}
+
+.auth-switch a {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.form-error {
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-field);
+  background: #f7dcd5;
+  color: var(--color-error);
+  font-size: 13px;
+}
+
+.field-error {
+  margin: 4px 0 0;
+  color: var(--color-error);
+  font-size: 12px;
+}
+
+/* ---- Board placeholder ---- */
+.board-screen {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.board-title {
+  font-family: var(--font-serif);
+  color: var(--color-heading);
+  margin: 0;
+}
+
+.logout-button {
+  border: 1px solid var(--color-accent);
+  background: var(--color-surface);
+  color: var(--color-accent);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}

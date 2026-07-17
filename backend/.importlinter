@@ -15,6 +15,7 @@
 # rest_framework). Without this, lint-imports errors out before checking anything.
 include_external_packages = True
 root_packages =
+    accounts
     notes
     observability
     shared
@@ -44,12 +45,39 @@ forbidden_modules =
 # The composition root (notes.container) is also allowed to import adapters; it is
 # not part of the source_modules above.
 
+[importlinter:contract:accounts-inward]
+name = Accounts: dependencies point inward (interface -> application -> domain)
+type = layers
+layers =
+    accounts.interface
+    accounts.application
+    accounts.domain
+
+[importlinter:contract:accounts-purity]
+name = Accounts: domain and application are framework-, adapter-, and log-free
+type = forbidden
+source_modules =
+    accounts.domain
+    accounts.application
+forbidden_modules =
+    django
+    rest_framework
+    accounts.infrastructure
+    accounts.interface
+    observability
+    notes
+# Category seeding crosses to the notes context only at the infrastructure edge
+# (accounts.infrastructure.seeding). The application layer depends on the
+# DefaultCategorySeeder PORT, never on notes — enforced above. The composition
+# root (accounts.container) is exempt: it wires adapters to ports.
+
 [importlinter:contract:contexts-independent]
 name = Support module does not depend on a bounded context
 type = forbidden
 source_modules =
     observability
 forbidden_modules =
+    accounts
     notes
 
 [importlinter:contract:shared-is-generic]
@@ -58,6 +86,7 @@ type = forbidden
 source_modules =
     shared
 forbidden_modules =
+    accounts
     notes
     observability
     django
