@@ -3,6 +3,7 @@
 Repositories return domain entities, never ORM objects.
 """
 
+from datetime import datetime
 from uuid import UUID
 
 from django.db.models import Count
@@ -106,7 +107,20 @@ class DjangoNoteRepository(NoteRepository):
         orm.content = note.content
         orm.category_id = note.category_id
         orm.last_edited_at = note.last_edited_at
-        orm.save(update_fields=["title", "content", "category", "last_edited_at"])
+        orm.version = note.version
+        orm.locked_by_session = note.locked_by
+        orm.lock_expires_at = note.lock_expires_at
+        orm.save(
+            update_fields=[
+                "title",
+                "content",
+                "category",
+                "last_edited_at",
+                "version",
+                "locked_by_session",
+                "lock_expires_at",
+            ]
+        )
         return note_to_domain(orm)
 
     def list_for_owner(
@@ -118,17 +132,17 @@ class DjangoNoteRepository(NoteRepository):
         return [note_to_domain(orm) for orm in qs]
 
     def list_for_owner_with_category(
-        self, owner_id: int, category_id: int | None = None
+        self,
+        owner_id: int,
+        category_id: int | None = None,
+        since: datetime | None = None,
     ) -> list[NoteView]:
         qs = NoteORM.objects.filter(owner_id=owner_id).select_related("category")
         if category_id is not None:
             qs = qs.filter(category_id=category_id)
-        return [
-            NoteView(
-                note=note_to_domain(orm), category=category_to_domain(orm.category)
-            )
-            for orm in qs
-        ]
+        if since is not None:
+            qs = qs.filter(last_edited_at__gt=since)
+        return [self._to_view(orm) for orm in qs]
 
     def get_with_category(self, note_id: UUID, owner_id: int) -> NoteView:
         try:
@@ -137,6 +151,10 @@ class DjangoNoteRepository(NoteRepository):
             )
         except NoteORM.DoesNotExist as exc:
             raise NoteNotFound(str(note_id)) from exc
+        return self._to_view(orm)
+
+    @staticmethod
+    def _to_view(orm: NoteORM) -> NoteView:
         return NoteView(
             note=note_to_domain(orm), category=category_to_domain(orm.category)
         )

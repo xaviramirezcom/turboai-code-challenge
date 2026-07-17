@@ -25,6 +25,7 @@ interface CategorySelectProps {
   categories: Category[];
   current: NoteCategory;
   onSelect: (categoryId: number) => void;
+  disabled?: boolean;
 }
 
 /** Editor category dropdown (criteria 3.1, 3.2) — dot + name + chevron. */
@@ -32,6 +33,7 @@ export function CategorySelect({
   categories,
   current,
   onSelect,
+  disabled = false,
 }: CategorySelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -61,6 +63,7 @@ export function CategorySelect({
         className="cat-select__button"
         aria-haspopup="listbox"
         aria-expanded={open}
+        disabled={disabled}
         onClick={() => setOpen((value) => !value)}
       >
         <span

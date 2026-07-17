@@ -411,6 +411,32 @@ body {
   justify-content: space-between;
 }
 
+.editor-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editor-presence {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-accent);
+  background: rgba(149, 113, 57, 0.12);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.editor-lock {
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(149, 113, 57, 0.14);
+  color: var(--color-heading);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .editor-close {
   display: inline-flex;
   align-items: center;
@@ -448,6 +474,14 @@ body {
   text-align: right;
 }
 
+.editor-notice {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  text-align: right;
+  color: var(--color-heading);
+}
+
 .editor-title,
 .editor-content {
   width: 100%;
@@ -479,6 +513,35 @@ body {
 .editor-title::placeholder,
 .editor-content::placeholder {
   color: rgba(0, 0, 0, 0.45);
+}
+
+/* ---- Connection status banner ---- */
+.conn {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  text-align: center;
+  padding: 6px 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.conn--offline {
+  background: var(--color-error);
+  color: #fff;
+}
+
+.conn--syncing {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.conn--synced {
+  background: #78aba8;
+  color: #12261f;
 }
 
 /* ---- Category dropdown ---- */

@@ -23,4 +23,7 @@ def note_to_domain(orm: NoteORM) -> Note:
         owner_id=orm.owner_id,
         created_at=orm.created_at,
         last_edited_at=orm.last_edited_at,
+        version=orm.version,
+        locked_by=orm.locked_by_session,
+        lock_expires_at=orm.lock_expires_at,
     )

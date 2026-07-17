@@ -26,6 +26,9 @@ describe('CreateNoteButton', () => {
       category: { id: 1, name: 'Random Thoughts', color: '#EF9C66' },
       created_at: '2024-07-21T20:39:00',
       last_edited_at: '2024-07-21T20:39:00',
+      version: 1,
+      locked_by: null,
+      lock_expires_at: null,
     });
 
     render(<CreateNoteButton />);

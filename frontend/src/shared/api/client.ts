@@ -23,6 +23,8 @@ interface RequestOptions {
   body?: unknown;
   /** Attach the Authorization header when a token is present (default true). */
   auth?: boolean;
+  /** Extra request headers (e.g. X-Session-Id for the advisory lock). */
+  headers?: Record<string, string>;
 }
 
 async function request<T>(
@@ -30,8 +32,8 @@ async function request<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, auth = true } = options;
-  const headers: Record<string, string> = {};
+  const { body, auth = true, headers: extra } = options;
+  const headers: Record<string, string> = { ...extra };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
 
   const token = getAuthToken();

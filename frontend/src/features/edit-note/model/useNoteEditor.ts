@@ -6,6 +6,9 @@ import type { Category } from '@/entities/category';
 import { listCategories } from '@/entities/category';
 import type { Note } from '@/entities/note';
 import { getNote, updateNote } from '@/entities/note';
+import { enqueue } from '@/features/offline-sync';
+import { ApiError } from '@/shared/api';
+import { getOnline, getSessionId } from '@/shared/lib';
 
 /** Autosave debounce (criterion 2.1 — ~500ms of quiet before persisting). */
 export const AUTOSAVE_MS = 500;
@@ -13,6 +16,10 @@ export const AUTOSAVE_MS = 500;
 interface Draft {
   title: string;
   content: string;
+}
+
+function opId(noteId: string): string {
+  return `${noteId}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
 }
 
 export interface NoteEditorState {
@@ -23,6 +30,7 @@ export interface NoteEditorState {
   saving: boolean;
   saveError: boolean;
   error: boolean;
+  notice: string | null; // e.g. "changed elsewhere" or "offline — queued"
   onTitleChange: (value: string) => void;
   onContentChange: (value: string) => void;
   changeCategory: (categoryId: number) => Promise<void>;
@@ -37,6 +45,7 @@ export function useNoteEditor(noteId: string): NoteEditorState {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [error, setError] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const noteRef = useRef<Note | null>(null);
   const draftRef = useRef<Draft>({ title: '', content: '' });
@@ -88,13 +97,40 @@ export function useNoteEditor(noteId: string): NoteEditorState {
     setSaving(true);
     let saved = false;
     try {
-      const result = await updateNote(current.id, draft);
+      const result = await updateNote(
+        current.id,
+        { ...draft, base_version: current.version },
+        getSessionId(),
+      );
       noteRef.current = result;
       setNote(result);
       setSaveError(false);
+      setNotice(null);
       saved = true;
-    } catch {
-      setSaveError(true);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        // Changed elsewhere (6.2): reload the server's version and tell the user.
+        const server = err.data as Note;
+        noteRef.current = server;
+        draftRef.current = { title: server.title, content: server.content };
+        setNote(server);
+        setTitle(server.title);
+        setContent(server.content);
+        setNotice('This note changed elsewhere — reloaded the latest version.');
+      } else if (!getOnline() || !(err instanceof ApiError)) {
+        // Offline / network: queue the edit so it survives a reload and syncs (2.x).
+        enqueue({
+          opId: opId(current.id),
+          kind: 'patch',
+          noteId: current.id,
+          baseVersion: current.version,
+          editedAt: new Date().toISOString(),
+          fields: { title: draft.title, content: draft.content },
+        });
+        setNotice('Offline — changes saved locally.');
+      } else {
+        setSaveError(true);
+      }
     } finally {
       inFlight.current = false;
       setSaving(false);
@@ -149,12 +185,29 @@ export function useNoteEditor(noteId: string): NoteEditorState {
     if (!current || categoryId === current.category_id) return;
     setSaving(true);
     try {
-      const result = await updateNote(current.id, { category_id: categoryId });
+      const result = await updateNote(
+        current.id,
+        { category_id: categoryId, base_version: current.version },
+        getSessionId(),
+      );
       noteRef.current = result;
       setNote(result);
       setSaveError(false);
-    } catch {
-      setSaveError(true);
+      setNotice(null);
+    } catch (err) {
+      if (!getOnline() || !(err instanceof ApiError)) {
+        enqueue({
+          opId: opId(current.id),
+          kind: 'patch',
+          noteId: current.id,
+          baseVersion: current.version,
+          editedAt: new Date().toISOString(),
+          fields: { category_id: categoryId },
+        });
+        setNotice('Offline — changes saved locally.');
+      } else {
+        setSaveError(true);
+      }
     } finally {
       setSaving(false);
     }
@@ -168,6 +221,7 @@ export function useNoteEditor(noteId: string): NoteEditorState {
     saving,
     saveError,
     error,
+    notice,
     onTitleChange,
     onContentChange,
     changeCategory,

@@ -3,6 +3,8 @@ import { Inria_Serif, Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 
 import { SessionProvider } from '@/entities/session';
+import { ConnectionStatus } from '@/features/connection-status';
+import { SyncBridge } from '@/features/offline-sync';
 
 import './globals.css';
 
@@ -31,7 +33,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${inriaSerif.variable}`}>
       <body>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <SyncBridge />
+          <ConnectionStatus />
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

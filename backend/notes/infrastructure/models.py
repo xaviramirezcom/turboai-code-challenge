@@ -47,16 +47,11 @@ class NoteORM(models.Model):
     # edits both bump it deterministically.
     last_edited_at = models.DateTimeField()
 
-    # Concurrency fields — persistence only here; behaviour is defined in
-    # specs/collaboration (optimistic version + advisory lock).
+    # Concurrency (specs/collaboration): optimistic version + advisory lock.
+    # The lock holder is a client SESSION token (one editing session per note),
+    # so a single owner's two tabs/devices block each other.
     version = models.PositiveIntegerField(default=1)
-    locked_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="locked_notes",
-    )
+    locked_by_session = models.CharField(max_length=64, null=True, blank=True)
     lock_expires_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

@@ -11,6 +11,10 @@ const push = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 vi.mock('@/entities/note', () => ({ getNote: vi.fn(), updateNote: vi.fn() }));
 vi.mock('@/entities/category', () => ({ listCategories: vi.fn() }));
+vi.mock('@/features/note-lock', () => ({
+  useNoteLock: () => ({ readOnly: false, status: 'editing' }),
+}));
+vi.mock('@/features/note-presence', () => ({ usePresence: () => 0 }));
 
 const mockedGet = vi.mocked(getNote);
 const mockedUpdate = vi.mocked(updateNote);
@@ -24,6 +28,9 @@ const NOTE = {
   category: { id: 1, name: 'Random Thoughts', color: '#EF9C66' },
   created_at: '2024-07-21T20:39:00',
   last_edited_at: '2024-07-21T20:39:00',
+  version: 1,
+  locked_by: null,
+  lock_expires_at: null,
 };
 
 const CATS = [
@@ -87,7 +94,8 @@ describe('NoteEditor', () => {
       () =>
         expect(mockedUpdate).toHaveBeenCalledWith(
           'n1',
-          expect.objectContaining({ content: 'hello there' }),
+          expect.objectContaining({ content: 'hello there', base_version: 1 }),
+          expect.any(String),
         ),
       { timeout: 2000 },
     );
@@ -145,7 +153,11 @@ describe('NoteEditor', () => {
     await user.click(screen.getByRole('button', { name: 'School' }));
 
     await waitFor(() =>
-      expect(mockedUpdate).toHaveBeenCalledWith('n1', { category_id: 2 }),
+      expect(mockedUpdate).toHaveBeenCalledWith(
+        'n1',
+        expect.objectContaining({ category_id: 2, base_version: 1 }),
+        expect.any(String),
+      ),
     );
     await waitFor(() => {
       const card = container.querySelector('.editor-card') as HTMLElement;

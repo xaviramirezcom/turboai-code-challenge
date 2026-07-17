@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 
+import { useNoteLock } from '@/features/note-lock';
+import { usePresence } from '@/features/note-presence';
 import { formatEditedAt, withAlpha } from '@/shared/lib';
 
 import { useNoteEditor } from '../model/useNoteEditor';
@@ -34,11 +36,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     saving,
     saveError,
     error,
+    notice,
     onTitleChange,
     onContentChange,
     changeCategory,
     flushNow,
   } = useNoteEditor(noteId);
+  const { readOnly } = useNoteLock(noteId);
+  const presenceCount = usePresence(noteId);
 
   function status(lastEditedAt: string): string {
     if (saving) return 'Saving…';
@@ -83,16 +88,28 @@ export function NoteEditor({ noteId }: { noteId: string }) {
           categories={categories}
           current={note.category}
           onSelect={changeCategory}
+          disabled={readOnly}
         />
-        <button
-          type="button"
-          className="editor-close"
-          aria-label="Close note"
-          onClick={close}
-        >
-          <CloseIcon />
-        </button>
+        <div className="editor-bar__right">
+          {presenceCount > 1 ? (
+            <span className="editor-presence">{presenceCount} here</span>
+          ) : null}
+          <button
+            type="button"
+            className="editor-close"
+            aria-label="Close note"
+            onClick={close}
+          >
+            <CloseIcon />
+          </button>
+        </div>
       </div>
+
+      {readOnly ? (
+        <p className="editor-lock" role="alert">
+          This note is being edited in another session — read only.
+        </p>
+      ) : null}
 
       <section
         className="editor-card"
@@ -101,11 +118,17 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         <p className="editor-edited" aria-live="polite">
           {status(note.last_edited_at)}
         </p>
+        {notice ? (
+          <p className="editor-notice" role="status">
+            {notice}
+          </p>
+        ) : null}
         <input
           className="editor-title"
           value={title}
           placeholder="Note Title"
           aria-label="Note title"
+          readOnly={readOnly}
           onChange={(event) => onTitleChange(event.target.value)}
         />
         <textarea
@@ -113,6 +136,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
           value={content}
           placeholder="Pour your heart out…"
           aria-label="Note content"
+          readOnly={readOnly}
           onChange={(event) => onContentChange(event.target.value)}
         />
       </section>

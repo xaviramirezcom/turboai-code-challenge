@@ -1,6 +1,7 @@
 """Repository ports (abstract) for the notes context."""
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 from uuid import UUID
 
 from .entities import Category, CategoryWithCount, Note, NoteView
@@ -48,9 +49,13 @@ class NoteRepository(ABC):
 
     @abstractmethod
     def list_for_owner_with_category(
-        self, owner_id: int, category_id: int | None = None
+        self,
+        owner_id: int,
+        category_id: int | None = None,
+        since: datetime | None = None,
     ) -> list[NoteView]:
-        """Owner-scoped list with each note's category joined (one query)."""
+        """Owner-scoped list with each note's category joined (one query).
+        ``since`` filters to notes edited after that time (delta pull, 3.1)."""
 
     @abstractmethod
     def get_with_category(self, note_id: UUID, owner_id: int) -> NoteView:
