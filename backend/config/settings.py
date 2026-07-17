@@ -75,8 +75,14 @@ TEMPLATES = [
 ]
 
 # Supabase Postgres in prod via DATABASE_URL; SQLite locally / in CI tests.
+# Escape hatch: set USE_SQLITE=1 to force a local SQLite file even when
+# DATABASE_URL points at Supabase — lets the app run when the remote DB is
+# paused/unreachable (empty local DB; re-signup). Unset it to go back to Supabase.
+_sqlite_default = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
 DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+    "default": env.db("DATABASE_URL", default=_sqlite_default)
+    if not env.bool("USE_SQLITE", default=False)
+    else env.db_url_config(_sqlite_default),
 }
 # Persist DB connections across requests. Against a remote Supabase Postgres a
 # fresh connection per request costs ~1.5s (TLS + auth handshake); reusing it
