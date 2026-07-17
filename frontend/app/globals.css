@@ -303,17 +303,21 @@ body {
 }
 
 /* ---- Note grid (masonry) ---- */
+/* Uniform grid of fixed-size cards (Figma board 2:99 — 303×246 cards, 13px
+   column gap, 16px row gap), not masonry. auto-fill keeps ~3 across on desktop
+   and wraps responsively while every card stays the same width. */
 .note-grid {
   flex: 1;
-  columns: 3 280px;
-  column-gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  align-content: start;
+  column-gap: 13px;
+  row-gap: 16px;
 }
 
 .note-grid > .note-card-wrap {
   position: relative;
   width: 100%;
-  margin-bottom: 16px;
-  break-inside: avoid;
 }
 
 /* Hover/focus-revealed delete control (board Req 6 — not in Figma; mirrors the
@@ -397,6 +401,8 @@ body {
   align-items: flex-start;
   gap: 12px;
   width: 100%;
+  height: 246px; /* fixed card height so every card is uniform (Figma 2:39) */
+  overflow: hidden;
   text-align: left;
   border: 3px solid;
   border-radius: 11px;
@@ -422,11 +428,22 @@ body {
   font-weight: 700;
   font-size: 24px;
   line-height: 1.1;
+  width: 100%;
+  /* clamp a long title so it can't blow the fixed card height */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .note-card__preview {
+  width: 100%;
   font-size: 12px;
   line-height: 1.4;
+  /* A deterministic line count — NOT flex:1. -webkit-line-clamp needs the box
+     to be exactly N lines to place the ellipsis; sizing it with flex made the
+     truncation depend on the title height and behave inconsistently. 6 lines
+     always fits under a 1- or 2-line title inside the fixed 246px card. */
   display: -webkit-box;
   -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;

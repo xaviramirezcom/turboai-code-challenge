@@ -1,0 +1,4 @@
+# OpenAI Python SDK. verbose_json + timestamp_granularities need a recent version.
+openai>=1.30.0
+# NOTE: ffmpeg + ffprobe are system dependencies, not pip packages.
+#   macOS:  brew install ffmpeg

@@ -11,11 +11,24 @@ prototype and be built with the required stack:
 
 - **Backend:** Django + Django REST Framework, exposing a JSON API.
 - **Frontend:** Next.js (App Router) + React + TypeScript.
+- **Database:** Supabase Postgres (Django connects via `DATABASE_URL`) — managed
+  Postgres only, not Supabase Auth/edge functions. Django owns auth + logic.
 - **Monorepo layout:** `backend/` (Django) and `frontend/` (Next.js).
 
 The graders explicitly evaluate: functionality, code quality + test coverage,
 creativity/effective AI use, and time management. Optimize for a clean,
 well-tested, reviewable submission over feature sprawl.
+
+## Start here (when told "go")
+
+The full, priority-ordered build plan is `specs/OVERVIEW.md`. Build **Tier 1
+(MVP: auth → notes → board) in full and verify it green before** starting Tier 2
+(offline-first) or Tier 3 (real-time locking) in `specs/collaboration/`. Do one
+feature at a time with `/spec-implement <feature>`, committing after each. Tier 1
+is the safe, complete deliverable the video demonstrates; the collaboration tiers
+are additive. Resolve a spec's Open questions before closing it; if the Figma is
+connected (Figma plugin), pull exact tokens/frames to fill the *(confirm in
+Figma)* placeholders.
 
 ## How we work: spec-driven, two sources of truth
 

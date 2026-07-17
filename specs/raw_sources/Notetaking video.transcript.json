@@ -1,0 +1,212 @@
+[
+  {
+    "start": 0.0,
+    "end": 11.0,
+    "text": "Hello, this is the demo for notes taking up for everyone who wants to keep track of their notes in an organized and aesthetic way."
+  },
+  {
+    "start": 11.0,
+    "end": 19.0,
+    "text": "So when the user first logs in into the app, they see a sign up screen where they can enter their email and their password."
+  },
+  {
+    "start": 19.0,
+    "end": 26.0,
+    "text": "They can also toggle between viewing and not viewing the password that they're typing, and they can sign up."
+  },
+  {
+    "start": 26.0,
+    "end": 37.0,
+    "text": "If they've already created their account, they can click and be taken to the login page where they can enter their email and password and log in instead."
+  },
+  {
+    "start": 37.0,
+    "end": 42.0,
+    "text": "In this case, let me pretend like I have never created an account before."
+  },
+  {
+    "start": 42.0,
+    "end": 48.0,
+    "text": "And in that case, I will land on an empty state because there are no notes."
+  },
+  {
+    "start": 49.0,
+    "end": 54.0,
+    "text": "I will see the categories that are automatically created for me."
+  },
+  {
+    "start": 54.0,
+    "end": 59.0,
+    "text": "The categories are random thoughts, school and personal, and I will see the option to create a new note."
+  },
+  {
+    "start": 59.0,
+    "end": 62.0,
+    "text": "So that is the beginning of the journey."
+  },
+  {
+    "start": 62.0,
+    "end": 67.0,
+    "text": "Now, users should be able to create new notes by clicking on the new note icon."
+  },
+  {
+    "start": 67.0,
+    "end": 73.0,
+    "text": "The structure of a note is there is the space to create the note."
+  },
+  {
+    "start": 73.0,
+    "end": 78.0,
+    "text": "The note is automatically created as soon as the user clicks on new note."
+  },
+  {
+    "start": 78.0,
+    "end": 80.0,
+    "text": "There is no need to save it or anything like that."
+  },
+  {
+    "start": 80.0,
+    "end": 82.0,
+    "text": "It is automatically created."
+  },
+  {
+    "start": 82.0,
+    "end": 89.0,
+    "text": "The note also has a last edited timestamp, which updates as the user writes or edits the note."
+  },
+  {
+    "start": 89.0,
+    "end": 94.0,
+    "text": "The note has a title and the content of the note."
+  },
+  {
+    "start": 94.0,
+    "end": 99.0,
+    "text": "Finally, the note also has a category and the user can decide to change that category."
+  },
+  {
+    "start": 99.0,
+    "end": 106.0,
+    "text": "And if the user decides to change the category, the background color of the note will change to the color associated to that category."
+  },
+  {
+    "start": 106.0,
+    "end": 113.0,
+    "text": "Once the user has finished typing, they can close the note."
+  },
+  {
+    "start": 113.0,
+    "end": 118.0,
+    "text": "And they will be taken back to the screen where all of the notes are."
+  },
+  {
+    "start": 118.0,
+    "end": 121.0,
+    "text": "So this is what this screen is."
+  },
+  {
+    "start": 121.0,
+    "end": 124.0,
+    "text": "It has, again, the categories on the left."
+  },
+  {
+    "start": 124.0,
+    "end": 132.0,
+    "text": "Each of the categories displays the color associated to the category, the title, and then the number of notes associated to that category."
+  },
+  {
+    "start": 132.0,
+    "end": 137.0,
+    "text": "And, again, the categories that exist are random thoughts, school, and personal."
+  },
+  {
+    "start": 137.0,
+    "end": 139.0,
+    "text": "We automatically create these."
+  },
+  {
+    "start": 139.0,
+    "end": 151.0,
+    "text": "If the user were to select any of these categories by clicking on them, it will filter and show them only the notes that are associated to that category."
+  },
+  {
+    "start": 151.0,
+    "end": 155.0,
+    "text": "If they click on all categories, they'll be able to see all of the notes."
+  },
+  {
+    "start": 155.0,
+    "end": 160.0,
+    "text": "Now, how the notes are displayed are they're displayed in preview cards."
+  },
+  {
+    "start": 160.0,
+    "end": 167.0,
+    "text": "The preview card contains the date of the last edited time, as well as the category name, the title, and the content."
+  },
+  {
+    "start": 167.0,
+    "end": 177.0,
+    "text": "If the content does not fit in the preview card, then the content is truncated, like in this card over here on the right."
+  },
+  {
+    "start": 177.0,
+    "end": 182.0,
+    "text": "Lastly, I must say that the date should be displayed as month and day."
+  },
+  {
+    "start": 182.0,
+    "end": 184.0,
+    "text": "No year should be displayed."
+  },
+  {
+    "start": 184.0,
+    "end": 189.0,
+    "text": "And if the note is from today or from yesterday, we should use the relative dates today and yesterday."
+  },
+  {
+    "start": 189.0,
+    "end": 198.0,
+    "text": "Any date that is older than yesterday, it should just display month and date."
+  },
+  {
+    "start": 198.0,
+    "end": 202.0,
+    "text": "Finally, users should be able to edit existing notes."
+  },
+  {
+    "start": 202.0,
+    "end": 211.0,
+    "text": "For example, if I click on this note, it will open it, and I will be able to see the content of the note, but I will also be able to edit it by clicking on the text."
+  },
+  {
+    "start": 211.0,
+    "end": 215.0,
+    "text": "I can edit both the title and the content of the note."
+  },
+  {
+    "start": 215.0,
+    "end": 220.0,
+    "text": "As soon as I edit, the last edited timestamps should be automatically updating."
+  },
+  {
+    "start": 220.0,
+    "end": 224.0,
+    "text": "And the other thing I can edit is the category."
+  },
+  {
+    "start": 224.0,
+    "end": 228.0,
+    "text": "By clicking on the category in the dropdown, I can also edit the category."
+  },
+  {
+    "start": 228.0,
+    "end": 230.0,
+    "text": "And that's it."
+  },
+  {
+    "start": 230.0,
+    "end": 232.0,
+    "text": "That is the note taking up."
+  }
+]

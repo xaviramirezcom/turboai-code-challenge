@@ -18,18 +18,19 @@ returns ISO `last_edited_at`; the client formats per Requirement 4. (Keeps the
 API locale/timezone-neutral.)
 
 ## Application
+
 `CategoryService.list_with_counts(owner)`; notes listing reuses `NoteService.list`.
 
 ## Frontend (FSD)
 
-| Piece | Layer/slice (segment) | States | Figma |
-|-------|-----------------------|--------|-------|
-| Board page | `views/board` (ui/) rendered by `app/(app)/page.tsx` | loading, empty, list, error | <link> |
-| Category sidebar + counts | `widgets/category-sidebar` (ui/, model/) | loading, active-filter | <link> |
-| Notes grid | `widgets/note-grid` (ui/) | loading, empty, list | <link> |
-| Preview card | `entities/note` (ui/ — NoteCard) | truncated/full, hover-✕ | <link> |
-| Filter state | `features/filter-by-category` (model/) | – | – |
-| Relative date | `shared/lib/format-date.ts` | – | – |
+| Piece                     | Layer/slice (segment)                                | States                      | Figma  |
+| ------------------------- | ---------------------------------------------------- | --------------------------- | ------ |
+| Board page                | `views/board` (ui/) rendered by `app/(app)/page.tsx` | loading, empty, list, error | <link> |
+| Category sidebar + counts | `widgets/category-sidebar` (ui/, model/)             | loading, active-filter      | <link> |
+| Notes grid                | `widgets/note-grid` (ui/)                            | loading, empty, list        | <link> |
+| Preview card              | `entities/note` (ui/ — NoteCard)                     | truncated/full, hover-✕     | <link> |
+| Filter state              | `features/filter-by-category` (model/)               | –                           | –      |
+| Relative date             | `shared/lib/format-date.ts`                          | –                           | –      |
 
 **Delete-from-card (Requirement 6).** `NoteCard` stays presentational: it renders
 a hover/focus-revealed ✕ only when given an `onDelete` prop, and the ✕ handler
@@ -44,11 +45,16 @@ solid on hover), sized small and pinned to the card's top-right.
 
 - `format-date.ts` is pure and heavily unit-tested (the today/yesterday/month-day
   branches + the no-year rule are a classic bug magnet).
-- The grid is masonry-style (variable card heights) *(confirm layout in Figma)*.
+- The grid is a **uniform grid of fixed-size cards** (Figma board 2:99: 303×246
+  cards, 13px column gap, 16px row gap) — every card is the same width and
+  height regardless of content; the title clamps to 2 lines and the content
+  fills the remaining fixed area and clips with an ellipsis. (Not masonry — the
+  earlier "confirm in Figma" is resolved to uniform.)
 - Empty state is a state of `views/board`, driven by the notes list being empty
   for the active filter.
 
 ## Testing strategy
+
 - `shared/lib/format-date`: today → "today"; yesterday → "yesterday"; older →
   "July 16" (no year); boundary at local midnight.
 - `widgets/category-sidebar`: renders categories + counts; clicking sets the filter.

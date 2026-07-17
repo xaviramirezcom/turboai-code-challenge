@@ -21,9 +21,10 @@ Test-first, per layer.
 - [x] 5. `entities/note` NoteCard: date + category + title + truncated content,
      category-coloured. _Covers: 3.1, 3.2, 3.3_ · _Figma: 2:39_ · _Tests:
      `NoteCard.test.tsx`_
-- [x] 6. `widgets/note-grid` + `views/board`: masonry grid ordered by last-edited,
-     empty state, card → editor; filter held in the view. _Covers: 3.4, 3.5, 5.1_ ·
-     _Figma: 1:2 / 12:486_ · _Tests: `NoteGrid.test.tsx`, `BoardView.test.tsx`_
+- [x] 6. `widgets/note-grid` + `views/board`: uniform grid of fixed-size cards
+     (Figma 2:99, 303×246; not masonry) ordered by last-edited, empty state,
+     card → editor; filter held in the view. _Covers: 3.4, 3.5, 5.1_ ·
+     _Figma: 1:2 / 2:99 / 12:486_ · _Tests: `NoteGrid.test.tsx`, `BoardView.test.tsx`_
 - [x] 7. Delete-from-card: `NoteCard` hover/focus ✕ (presentational, via
      `onDelete`, stopPropagation); `widgets/note-grid` + `useNotes.remove`
      confirm→delete→remove card (keep on cancel/failure); `views/board`
