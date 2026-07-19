@@ -5,7 +5,7 @@ Django + DRF backend, Next.js + React + TypeScript frontend, Supabase Postgres.
 
 - **Repo:** <your-github-url>
 - **Demo video (5 min):** <your-video-url>
-- **Live demo:** https://99ab-2800-bf0-177-177-cf9-a906-4b1d-76f8.ngrok-free.app
+- **Live demo:** https://5ead-2800-bf0-177-177-d871-e874-4c40-622b.ngrok-free.app
   (API: https://165f-2800-bf0-177-177-cf9-a906-4b1d-76f8.ngrok-free.app/api) —
   temporary ngrok tunnels to a local dev stack; they only resolve while it's
   running. To run it yourself, see [Running it locally](#running-it-locally).
@@ -49,19 +49,77 @@ then drive it." Three phases:
 Before a line of feature code, I set up everything the AI needed to produce clean,
 consistent, well-tested code and *stay* inside the rails:
 
-- A lean `CLAUDE.md` (project memory), path-scoped rule files (backend, frontend,
-  observability, specs), and reusable **skills** (`/spec-implement`, `/django-endpoint`,
-  `/react-component`, `/test-driven`, `/integration-test`, `/triage-logs`,
-  `/conventional-commit`, `/verify`).
-- **Enforced guardrails**, not just guidelines: pre-tool hooks that block
-  test-weakening edits (adding `skip`/`xfail`, deleting assertions, lowering the
-  coverage floor) and dangerous shell commands; auto-format on save; a coverage floor;
-  a CI workflow and a pre-commit gate.
-- **Architecture as a rule the build enforces**: `docs/ARCHITECTURE.md` (backend) and
-  `docs/FRONTEND_ARCHITECTURE.md` (frontend), backed by `import-linter` and
-  `dependency-cruiser` so a boundary violation fails the build.
-- A **spec-kit template** (`requirements.md` / `design.md` / `tasks.md`) so every
-  feature is specified before it's implemented.
+- A lean `CLAUDE.md` (project memory) plus path-scoped rule files that load only when
+  the relevant files are touched (backend, frontend, observability, specs).
+- Reusable **skills** — named workflows the AI follows instead of improvising.
+- **Enforced guardrails** — hooks that block bad changes rather than asking nicely.
+- **Architecture the build enforces**, so a boundary violation fails CI.
+- A **spec-kit template** so every feature is specified before it is implemented.
+
+#### The skills
+
+Each one is a checklist the AI loads on demand, so the same kind of work is done the
+same way every time.
+
+| Skill | What it does |
+| --- | --- |
+| `/spec-implement` | Reads a feature's spec, turns each numbered acceptance criterion into a test, then implements task by task. The entry point for any feature that has a spec folder. |
+| `/django-endpoint` | Builds a backend feature as one full vertical slice — domain entity, use case, ORM/repository adapter, DRF view, wiring — with tests at every layer. |
+| `/react-component` | Builds frontend UI the Feature-Sliced way: right layer and slice, exported through the slice's public index, data through the API layer, and loading/empty/error states handled. |
+| `/test-driven` | Writes the failing test first, makes it pass with the smallest change, then refactors. Used for new behaviour and for reproducing bugs before fixing them. |
+| `/integration-test` | Tests the real seams rather than mocks — a full request through Django to the database, or a component plus its typed API layer with the network stubbed. |
+| `/triage-logs` | Reads error rows from the database, reproduces the failure as a test, fixes the code, and marks the error resolved. Debugging without re-running the server. |
+| `/conventional-commit` | Groups the change into small, logically separate commits with `type(scope): subject` messages, so the history reads as a build rather than a dump. |
+
+#### The commands
+
+Fixed procedures I run by name (`/name`), rather than workflows the AI adapts.
+
+| Command | What it does |
+| --- | --- |
+| `/verify` | Runs the whole quality gate — lint, format, types, architecture, tests, coverage — across both apps and reports what passes and fails, fixing nothing. |
+
+#### The agents
+
+A subagent runs in its own context and reports back, so a big or focused job doesn't
+crowd the main session.
+
+| Agent | What it does |
+| --- | --- |
+| `code-reviewer` | A read-only senior reviewer. Reads the diff and reports prioritised findings on correctness, security, test coverage, and project conventions — it never edits code, so the main session decides what to act on. |
+
+#### The guardrails
+
+Rules the AI cannot talk its way past, because they run as hooks around every tool call.
+
+| Guardrail | What it does |
+| --- | --- |
+| `guard-tests.sh` | Blocks any edit that weakens a test — adding `skip`/`xfail`/`.only`, deleting assertions, or silencing the type checker. A failing test means the code is wrong, so the code is what changes. |
+| `block-dangerous.sh` | Inspects the actual shell command and refuses destructive ones (`rm -rf`, `git reset --hard`, force pushes), including commands assembled in ways a simple permission rule would miss. |
+| `format-file.sh` | Formats every file the moment it is written, so no commit ever contains formatting noise and diffs stay about behaviour. |
+| `quality-gate.sh` | At the end of each turn, reminds the AI of the definition of done when code changed but the checks may not have run. |
+| Coverage floor | The suite fails below 85% coverage, and the floor itself is one of the things the test guard refuses to let the AI lower. |
+| Pre-commit gate + CI | The same checks run locally before a commit is created and again in GitHub Actions, so a broken change cannot enter the history in the first place. |
+
+#### The architecture rules
+
+Both apps have a layering rule, and in both cases a linter fails the build if it is broken —
+the design cannot quietly rot as the code grows.
+
+| Rule | What it means |
+| --- | --- |
+| Backend — hexagonal (`docs/ARCHITECTURE.md`) | Dependencies point inward: interface → application → domain, with the domain importing no framework at all. Business rules stay testable without Django. Enforced by `import-linter`. |
+| Frontend — Feature-Sliced Design (`docs/FRONTEND_ARCHITECTURE.md`) | Layers import only downward (`app → views → widgets → features → entities → shared`), and slices talk to each other only through a public `index.ts`. Enforced by `dependency-cruiser`. |
+
+#### The specs
+
+Every feature is three short documents under `specs/<feature>/`, written before the code.
+
+| File | What it holds |
+| --- | --- |
+| `requirements.md` | Numbered acceptance criteria in EARS form (`WHEN … THE SYSTEM SHALL …`), including the unhappy paths. Each number is the ID that tests cite, so behaviour traces back to a requirement. |
+| `design.md` | The API contract, data model, and which Figma frame governs each piece of UI — the decisions made once, up front, rather than improvised mid-implementation. |
+| `tasks.md` | The ordered, test-first checklist, each task naming the criteria it satisfies and the tests that prove it. |
 
 ### 2. Turn the brief into specs
 
