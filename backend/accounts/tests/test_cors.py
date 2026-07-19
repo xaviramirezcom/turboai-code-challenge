@@ -4,10 +4,6 @@ The Next.js dev server (http://localhost:3000) calls this API cross-origin, so
 the signup/login preflight (OPTIONS) must return Access-Control-Allow-Origin.
 """
 
-import os
-import subprocess
-import sys
-
 import pytest
 from django.conf import settings
 from django.test import override_settings
@@ -72,97 +68,47 @@ def test_preflight_does_not_allow_an_unlisted_origin() -> None:
     assert not resp.has_header("Access-Control-Allow-Origin")
 
 
-@pytest.mark.parametrize(
-    "origin",
-    [
-        "https://a1b2-3-4-5-6.ngrok-free.app",
-        "https://turbo-notes.ngrok.app",
-        "https://turbo-notes.ngrok-free.dev",
-        "https://legacy.ngrok.io",
-    ],
-)
-def test_preflight_allows_an_ngrok_tunnel_origin_when_opted_in(origin: str) -> None:
-    # The free plan hands out a new subdomain on every restart, so the pattern —
-    # not a pinned host — is what keeps a demo working. Opt-in via
-    # ALLOW_NGROK_ORIGINS=1 (settings.py).
-    with override_settings(
-        CORS_ALLOWED_ORIGIN_REGEXES=[
-            *settings.CORS_ALLOWED_ORIGIN_REGEXES,
-            *settings.NGROK_ORIGIN_REGEXES,
-        ]
-    ):
-        resp = _preflight(origin)
-    assert resp["Access-Control-Allow-Origin"] == origin
-
-
-@pytest.mark.parametrize(
-    "origin",
-    [
-        "https://ngrok-free.app.evil.example.com",
-        "https://evil.example.com/x.ngrok-free.app",
-        "http://a1b2.ngrok-free.app",
-    ],
-)
-def test_ngrok_pattern_does_not_allow_a_lookalike_origin(origin: str) -> None:
-    # The pattern is anchored and https-only: a domain that merely CONTAINS
-    # "ngrok-free.app" (or an http:// tunnel) must not slip through.
-    with override_settings(
-        CORS_ALLOWED_ORIGIN_REGEXES=[
-            *settings.CORS_ALLOWED_ORIGIN_REGEXES,
-            *settings.NGROK_ORIGIN_REGEXES,
-        ]
-    ):
-        resp = _preflight(origin)
-    assert not resp.has_header("Access-Control-Allow-Origin")
-
-
-def test_ngrok_origins_are_not_allowed_by_default() -> None:
-    # ALLOW_NGROK_ORIGINS is off unless explicitly set, so the tunnel pattern is
-    # NOT active — this is what stops a deployment trusting every ngrok subdomain.
-    assert not settings.ALLOW_NGROK_ORIGINS
-    resp = _preflight("https://a1b2-3-4-5-6.ngrok-free.app")
-    assert not resp.has_header("Access-Control-Allow-Origin")
-
-
-@pytest.mark.parametrize(
-    ("env_overrides", "expect_ngrok_allowed"),
-    [
-        ({"ALLOW_NGROK_ORIGINS": "1", "DEBUG": "0"}, True),
-        ({"ALLOW_NGROK_ORIGINS": "0", "DEBUG": "1"}, False),
-    ],
-)
-def test_only_the_opt_in_flag_enables_ngrok_origins(
-    env_overrides: dict[str, str], expect_ngrok_allowed: bool
-) -> None:
-    """The flag — not DEBUG — is what turns the tunnel pattern on.
-
-    Tunnelling must never require DEBUG=True: a tunnelled backend is publicly
-    reachable, and DEBUG serves Django's traceback pages (settings, env, locals)
-    to anyone who finds the URL. Loads settings in a subprocess because the
-    regex list is built once at import time.
-    """
-    probe = (
-        "import django; django.setup();"
-        "from django.conf import settings as s;"
-        "print(any(p in s.CORS_ALLOWED_ORIGIN_REGEXES for p in s.NGROK_ORIGIN_REGEXES))"
-    )
-    result = subprocess.run(
-        [sys.executable, "-c", probe],
-        cwd=settings.BASE_DIR,
-        env={
-            **os.environ,
-            "DJANGO_SETTINGS_MODULE": "config.settings",
-            **env_overrides,
-        },
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert result.stdout.strip() == str(expect_ngrok_allowed)
-
-
 def test_preflight_does_not_allow_a_non_loopback_lan_origin() -> None:
     # Loopback is broadened for dev convenience, but arbitrary LAN/public origins
     # stay gated by CORS_ALLOWED_ORIGINS.
     resp = _preflight("http://192.168.1.50:3000")
+    assert not resp.has_header("Access-Control-Allow-Origin")
+
+
+# A deployed origin is whatever CORS_ALLOWED_ORIGINS names at runtime (a tunnel
+# in dev, a real domain in prod). Tests never encode a specific host — they pin
+# the rule: exactly what the env lists is allowed, and nothing else.
+DEPLOYED_ORIGIN = "https://notes.example.com"
+
+
+def test_preflight_allows_an_origin_named_in_the_allowlist() -> None:
+    with override_settings(CORS_ALLOWED_ORIGINS=[DEPLOYED_ORIGIN]):
+        resp = _preflight(DEPLOYED_ORIGIN)
+    assert resp["Access-Control-Allow-Origin"] == DEPLOYED_ORIGIN
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "https://other.example.com",
+        "https://notes.example.com.evil.test",
+        "http://notes.example.com",
+    ],
+)
+def test_preflight_rejects_origins_the_allowlist_does_not_name(origin: str) -> None:
+    # Listing one origin must not admit its neighbours: a different host, a
+    # lookalike suffix, and the same host over http all stay blocked.
+    with override_settings(CORS_ALLOWED_ORIGINS=[DEPLOYED_ORIGIN]):
+        resp = _preflight(origin)
+    assert not resp.has_header("Access-Control-Allow-Origin")
+
+
+def test_only_loopback_is_granted_without_configuration() -> None:
+    # The shipped regexes cover local dev only; every public origin has to come
+    # from CORS_ALLOWED_ORIGINS. Guards against a wildcard creeping back in.
+    assert settings.CORS_ALLOWED_ORIGIN_REGEXES == [
+        r"^http://localhost:\d+$",
+        r"^http://127\.0\.0\.1:\d+$",
+    ]
+    resp = _preflight(DEPLOYED_ORIGIN)
     assert not resp.has_header("Access-Control-Allow-Origin")

@@ -17,7 +17,6 @@ env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ["*"]),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
-    ALLOW_NGROK_ORIGINS=(bool, False),
 )
 
 # Load a local .env if present (never committed). CI/prod inject real env vars.
@@ -61,28 +60,14 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://127\.0\.0\.1:\d+$",
 ]
 
-# ngrok (see ngrok.yml) gives the dev stack public HTTPS URLs for demos. The free
-# plan assigns a NEW random subdomain on every restart, so pinning one in
-# CORS_ALLOWED_ORIGINS would break on the next `ngrok start` — hence a pattern.
+# Public tunnels (ngrok, see ngrok.yml) are NOT pattern-matched. A wildcard like
+# `*.ngrok-free.app` would trust every tunnel on a shared public domain — anyone
+# else's included — so each demo origin is named explicitly instead:
 #
-# This trusts every tunnel on a shared public domain, so it is opt-in and OFF by
-# default. It is deliberately NOT tied to DEBUG: a tunnelled backend is publicly
-# reachable, and DEBUG=True would serve Django's traceback pages (settings, env,
-# local variables) to anyone who finds the URL. Demoing must not require that.
+#     CORS_ALLOWED_ORIGINS=http://localhost:3000,https://<subdomain>.ngrok-free.app
 #
-#     ALLOW_NGROK_ORIGINS=1 python manage.py runserver
-#
-# A real deployment lists its exact origin in CORS_ALLOWED_ORIGINS and leaves
-# this off; a reserved (paid) ngrok domain belongs in that env var too.
-NGROK_ORIGIN_REGEXES = [
-    r"^https://[a-z0-9][a-z0-9-]*\.ngrok(-free)?\.(app|dev)$",
-    r"^https://[a-z0-9][a-z0-9-]*\.ngrok\.io$",
-]
-
-ALLOW_NGROK_ORIGINS = env("ALLOW_NGROK_ORIGINS")
-
-if ALLOW_NGROK_ORIGINS:
-    CORS_ALLOWED_ORIGIN_REGEXES += NGROK_ORIGIN_REGEXES
+# The free plan rotates that subdomain on every `ngrok start`, so this is one env
+# change per demo. That cost is the point: the allowlist stays exact.
 
 # The advisory-lock endpoints send an X-Session-Id header; it must be allowed in
 # the CORS preflight or the browser cancels the lock/heartbeat/unlock requests.
