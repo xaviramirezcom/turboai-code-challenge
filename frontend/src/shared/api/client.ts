@@ -4,6 +4,7 @@ never call fetch directly (enforced by ESLint in ui/). */
 import { API_BASE_URL } from '@/shared/config';
 
 import { getAuthToken } from './authToken';
+import { NGROK_SKIP_WARNING_HEADER } from './ngrokHeader';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -36,7 +37,10 @@ async function request<T>(
   options: RequestOptions = {},
 ): Promise<T> {
   const { body, auth = true, headers: extra, keepalive } = options;
-  const headers: Record<string, string> = { ...extra };
+  const headers: Record<string, string> = {
+    ...NGROK_SKIP_WARNING_HEADER,
+    ...extra,
+  };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
 
   const token = getAuthToken();

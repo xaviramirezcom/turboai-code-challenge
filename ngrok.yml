@@ -1,0 +1,32 @@
+# ngrok agent config — exposes the local dev stack over public HTTPS URLs.
+#
+# No authtoken here on purpose (see CLAUDE.md → keep secrets out of git). Store
+# it once in your global config instead:
+#
+#     ngrok config add-authtoken <your-token>
+#
+# ...then start both tunnels by layering this file on top of the global one:
+#
+#     ngrok start --all \
+#       --config "$HOME/Library/Application Support/ngrok/ngrok.yml" \
+#       --config ./ngrok.yml
+#
+# Ports match the documented dev servers: Next.js on 3000 (`npm run dev`),
+# Django on 8000 (`python manage.py runserver`).
+
+version: "3"
+
+tunnels:
+  frontend:
+    proto: http
+    addr: 3000
+    schemes: [https]
+    # A reserved domain keeps the URL stable across restarts (paid plans only).
+    # Without it ngrok assigns a random *.ngrok-free.app host on every start.
+    # domain: your-frontend.ngrok-free.app
+
+  backend:
+    proto: http
+    addr: 8000
+    schemes: [https]
+    # domain: your-backend.ngrok-free.app

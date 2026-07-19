@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react';
 
+import { NGROK_SKIP_WARNING_HEADER } from '@/shared/api/ngrokHeader';
 import { API_BASE_URL } from '@/shared/config';
 
 let online =
@@ -39,7 +40,10 @@ export function useOnline(): boolean {
 /** Heartbeat to the unauthenticated health endpoint (1.1). Never throws. */
 export async function checkHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE_URL}/health/`, { method: 'GET' });
+    const res = await fetch(`${API_BASE_URL}/health/`, {
+      method: 'GET',
+      headers: { ...NGROK_SKIP_WARNING_HEADER },
+    });
     return res.ok;
   } catch {
     return false;

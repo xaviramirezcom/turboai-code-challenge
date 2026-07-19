@@ -13,6 +13,17 @@
 set -uo pipefail
 fail=0
 
+# Run from the repo root regardless of where `git commit` was invoked, then put
+# the backend venv on PATH. The checks below call tools by bare name (ruff,
+# pytest, lint-imports), which otherwise resolve only in a shell that happens to
+# have the venv activated — so the same commit would pass or fail depending on
+# terminal state. Resolve it here instead of relying on the caller.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+if [ -d backend/.venv/bin ]; then
+  PATH="$PWD/backend/.venv/bin:$PATH"
+  export PATH
+fi
+
 changed() { git diff --cached --name-only --diff-filter=ACM; }
 
 if changed | grep -q '^backend/.*\.py$'; then

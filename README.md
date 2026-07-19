@@ -5,6 +5,10 @@ Django + DRF backend, Next.js + React + TypeScript frontend, Supabase Postgres.
 
 - **Repo:** <your-github-url>
 - **Demo video (5 min):** <your-video-url>
+- **Live demo:** https://99ab-2800-bf0-177-177-cf9-a906-4b1d-76f8.ngrok-free.app
+  (API: https://165f-2800-bf0-177-177-cf9-a906-4b1d-76f8.ngrok-free.app/api) —
+  temporary ngrok tunnels to a local dev stack; they only resolve while it's
+  running. To run it yourself, see [Running it locally](#running-it-locally).
 
 ---
 
