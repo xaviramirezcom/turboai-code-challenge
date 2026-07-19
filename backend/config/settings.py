@@ -9,6 +9,8 @@ from pathlib import Path
 import environ
 from corsheaders.defaults import default_headers
 
+from config.db import tune_connection
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
@@ -112,12 +114,15 @@ DATABASES = {
     if not env.bool("USE_SQLITE", default=False)
     else env.db_url_config(_sqlite_default),
 }
-# Persist DB connections across requests. Against a remote Supabase Postgres a
-# fresh connection per request costs ~1.5s (TLS + auth handshake); reusing it
-# drops a warm request to a single round-trip. CONN_HEALTH_CHECKS reopens a
-# connection Supabase dropped while idle, so persistence is safe.
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=600)
-DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+# Connection handling depends on which Supabase pooler port DATABASE_URL uses:
+# 6543 (transaction mode) pools server-side, so Django must not hold connections
+# and must disable psycopg's prepared statements; 5432 (session mode) pins one
+# slot per client, so connections are persisted but each one squats a slot of
+# the 15 available. Prefer 6543 for a threaded app. See config/db.py.
+DATABASES["default"] = tune_connection(
+    DATABASES["default"],
+    session_conn_max_age=env.int("DB_CONN_MAX_AGE", default=600),
+)
 
 AUTH_PASSWORD_VALIDATORS = [
     {
